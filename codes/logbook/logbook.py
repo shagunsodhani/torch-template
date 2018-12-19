@@ -91,4 +91,4 @@ class LogBook(Experiment):
 
     def write_model_graph(self, graph):
         """Write model graph"""
-        self.set_model_graph(self, graph)
+        self.set_model_graph(graph)

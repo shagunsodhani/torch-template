@@ -1,10 +1,10 @@
 """Class to run the experiments"""
 import os
-from time import time
+# from time import time
 
 import torch
 
-import codes.experiment.metric as metric
+from codes.experiment import metric
 from codes.logbook.logbook import LogBook
 from codes.utils.util import get_cpu_stats
 
@@ -12,12 +12,12 @@ from codes.utils.util import get_cpu_stats
 class Experiment():
     """Experiment Class"""
 
-    def __init__(self, config, agents):
+    def __init__(self, config, models):
         self.config = config
-        self.agents = agents
         self.logbook = LogBook(self.config)
         self.support_modes = self.config.model.modes
         self.device = self.config.general.device
+        self.models = models
         self.reset_experiment()
         self.startup_logs()
         # torch.autograd.set_detect_anomaly(mode=True)
@@ -42,7 +42,7 @@ class Experiment():
         """Method to interface with the logbook"""
         return self.logbook.write_compute_logs(**kwargs)
 
-    def write_git_metadata(self, **kwargs):
+    def write_git_metadata(self):
         """Method to interface with the logbook"""
         return self.logbook.set_git_metadata()
 
@@ -64,7 +64,7 @@ class Experiment():
 
     def write_model_graph(self, graph):
         """Write model graph"""
-        self.logbook.write_model_graph(self, graph)
+        self.logbook.write_model_graph(graph)
 
     def set_eval_mode(self):
         """Prepare for the eval mode"""
@@ -77,7 +77,8 @@ class Experiment():
     def run(self):
         """Method to run the experiment"""
 
-        start_time = time()
+        # start_time = time()
+        num_uptates_to_do = -1
 
         total_num_steps = 0
 
@@ -87,14 +88,14 @@ class Experiment():
 
         current_metric_dict = metric.get_default_metric_dict(mode=mode)
 
-        for epochs in range(num_updates):
+        for epochs in range(num_uptates_to_do):
 
             if should_log_compute_stats:
                 compute_stats["start_stats"] = get_cpu_stats()
 
             self.save(epochs=epochs)
 
-            end_time = time()
+            # end_time = time()
 
             if epochs % self.config.cometml.frequency == 0:
                 self.write_metric_logs(**(
@@ -119,14 +120,15 @@ class Experiment():
                 compute_stats["num_timesteps"] = total_num_steps
                 self.write_compute_logs(**compute_stats)
 
-            start_time = time()
+            # start_time = time()
 
     def evaluate(self, num_training_steps_so_far, num_training_epochs_so_far):
         """Method to run the experiment"""
 
         metric_dict = dict(
             mode="test",
-
+            num_training_steps_so_far=num_training_steps_so_far,
+            num_training_epochs_so_far=num_training_epochs_so_far
         )
         self.write_metric_logs(**metric_dict)  # pylint: disable=E1121
 
@@ -134,10 +136,10 @@ class Experiment():
         """Method to write some startup logs"""
         self.write_config_log(self.config)
         # self.write_git_metadata()
-        self.log_env_file()
         self.log_config_file()
 
     def log_config_file(self):
+        """Method to log the config file"""
         split_key = "codes/experiment"
         current_path = os.path.dirname(os.path.realpath(__file__))
         file_path = os.path.join(current_path.split(split_key)[0],
@@ -152,11 +154,11 @@ class Experiment():
         """Method to save the experiment"""
         if self.config.model.persist_frquency > 0 \
                 and epochs % self.config.model.persist_frquency == 0:
-            for agent in self.agents.iterate_over_agents():
-                agent.save(epochs)
+            for model in self.models:
+                model.save(epochs)
 
 
-def prepare_and_run_experiment(config):
+def prepare_and_run_experiment(config, models):
     """Primary method to interact with the Experiments"""
-    experiment = Experiment(config)
+    experiment = Experiment(config, models)
     experiment.run()

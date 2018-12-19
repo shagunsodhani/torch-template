@@ -1,11 +1,9 @@
 """Code to read and process the config"""
 import datetime
 import os
-from copy import deepcopy
 
 import torch
 import yaml
-from collections import defaultdict
 
 from codes.utils.log import set_logger, write_message_logs, write_config_log
 from codes.utils.serializable_config import get_config_box, get_forzen_config_box
@@ -63,13 +61,11 @@ def _post_process_general_config(general_config, experiment_id=0):
     if not general_config.date:
         general_config.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    general_config.device = torch.device(general_config.device)
+    general_config.device = torch.device(general_config.device)  # pylint: disable=E1101
     general_config.experiment_id = experiment_id
     env_var_name = "SLURM_JOB_ID"
     if env_var_name in os.environ:
         general_config.slurm_id = str(os.environ[env_var_name])
-
-
 
     return general_config
 

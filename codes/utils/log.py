@@ -4,8 +4,6 @@ import logging
 
 from codes.utils.util import flatten_dict
 
-log_types = ["time", "config", "metric", "metadata"]
-
 
 def _format_log(log):
     """format logs"""

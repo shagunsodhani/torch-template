@@ -234,11 +234,11 @@ def map_observation_space_to_shape(obs):
     return obs.shape
 
 
-def split_on_caps(str):
+def split_on_caps(input_str):
     """Method to split a given string at uppercase characters.
     Taken from: https://stackoverflow.com/questions/2277352/split-a-string-at-uppercase-letters
     """
-    return re.findall('[A-Z][^A-Z]*', str)
+    return re.findall('[A-Z][^A-Z]*', input_str)
 
 
 def print_mem_report():

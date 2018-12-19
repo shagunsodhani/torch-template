@@ -9,6 +9,7 @@ from codes.experiment.experiment import prepare_and_run_experiment
 from codes.utils.config import get_config
 from codes.utils.log import set_logger, write_message_logs, write_config_log
 from codes.utils.util import set_seed
+from codes.model.base_model import BaseModel
 
 
 class GradStudent():
@@ -19,8 +20,13 @@ class GradStudent():
     def __init__(self, config_id):
         self.config = bootstrap_config(config_id)
         self.num_experiments = self.config.general.num_experiments
-        torch.set_num_threads(self.num_experiments)
+        torch.set_num_threads(self.num_experiments) #pylint: disable=E1101
         self.device = self.config.general.device
+        self.models = self.bootstrap_models()
+
+    def bootstrap_models(self):
+        """Method to instantiate the models that will be common to all the experiments."""
+        return BaseModel(self.config)
 
     def run(self):
         """Method to run the task"""
@@ -30,22 +36,22 @@ class GradStudent():
 
         if self.num_experiments > 1:
 
-            for agent in self.agents.iterate_over_agents():
-                agent.policy.share_memory()
+            for model in self.models:
+                model.share_memory()
 
             processes = []
             for experiment_id in range(self.num_experiments):
                 config = get_config(self.config.general.id, experiment_id=experiment_id)
                 proc = mp.Process(target=prepare_and_run_experiment,
                                   args=(config,
-                                        self.agents))
+                                        self.models))
                 proc.start()
                 processes.append(proc)
             for proc in processes:
                 proc.join()
         else:
             prepare_and_run_experiment(config=self.config,
-                                       agents=self.agents)
+                                       models=self.models)
 
 
 def bootstrap_config(config_id):

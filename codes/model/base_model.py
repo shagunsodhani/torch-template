@@ -6,8 +6,7 @@ from time import time
 
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.optim as optim
+from torch import nn, optim
 
 from codes.utils.log import write_message_logs
 
@@ -45,7 +44,7 @@ class BaseModel(nn.Module):
             "np_random_state": np.random.get_state(),
             "python_random_state": random.getstate(),
             "pytorch_random_state": torch.get_rng_state(),
-            # "schedulers": [scheduler.state_dict() for scheduler in schedulers]
+            "schedulers": [scheduler.state_dict() for scheduler in schedulers]
         }
         if is_best_model:
             path = os.path.join(model_config.save_dir,
@@ -119,7 +118,7 @@ class BaseModel(nn.Module):
         if optimizer_config.name == "RMSprop":
             return optimizer_cls(
                 model_params,
-                alpha = optimizer_config.alpha,
+                alpha=optimizer_config.alpha,
                 lr=optimizer_config.learning_rate,
                 weight_decay=optimizer_config.l2_penalty,
                 eps=optimizer_config.eps
@@ -151,7 +150,7 @@ class BaseModel(nn.Module):
 
         return optimizers, schedulers
 
-    def forward(self, data):
+    def forward(self, data): # pylint: disable=W0221
         '''Forward pass of the network'''
         pass
 
