@@ -1,0 +1,47 @@
+{
+    "general": {
+        "seed": 42,
+        "base_path": "",
+        "device": "cpu",
+        "id": "sample_config",
+        "description": "Sample Configuration",
+        "server": "cluster",
+        # Note that this parameter is being ignore for now.
+        "commit_id": "",
+        "date": "",
+        "num_experiments":1,
+        "slurm_id": "-1",
+    },
+    "cometml":{
+         "api_key": "",
+         "workspace": "",
+         "project_name": "",
+         "should_use": True,
+         "frequency": 100,
+    },
+    "model": {
+        "should_train": true,
+        "num_epochs": 100000,
+        "persist_frquency": -1,
+      # In terms of number of updates
+        "evaluate_frequency": -1,
+      # In terms of number of updates
+        "persist_best_model": false,
+        "early_stopping_patience": 150,
+        "use_sparse_embedding": false,
+        "save_dir": "",
+        "load_path": "7/best_model.tar",
+      # the loadpath would look something like this 2/model_epoch_101_timestamp_1534428832.tar
+        "should_load_model": false,
+        "modes": ["train", "val", "test"],
+      # Modes to perform during experiment. Supported values "train", "val", "test"
+    },
+    "log": {
+        "file_path": "",
+        "should_log_trajectory": true,
+        "should_log_compute_stats": false,
+    },
+    "plot": {
+        "base_path": ""
+    },
+}
