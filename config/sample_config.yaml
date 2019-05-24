@@ -12,7 +12,7 @@
         "num_experiments":1,
         "slurm_id": "-1",
     },
-    "cometml":{
+    "wandb":{
          "api_key": "",
          "workspace": "",
          "project_name": "",

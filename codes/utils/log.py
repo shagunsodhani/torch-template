@@ -1,12 +1,14 @@
 """Logging functions to write to disk"""
 import json
 import logging
+import time
 
 from codes.utils.util import flatten_dict
 
 
 def _format_log(log):
     """format logs"""
+    log = _add_time_to_log(log)
     return json.dumps(log)
 
 
@@ -16,6 +18,10 @@ def write_log(log):
      before feeding to this method"""
     get_logger().warning(log)
 
+
+def _add_time_to_log(log):
+    log["timestamp"] = time.strftime('%I:%M%p %Z %b %d, %Y')
+    return log 
 
 def read_log(log):
     """This is the single point to read any log message from the file.
