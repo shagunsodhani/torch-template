@@ -49,6 +49,7 @@ def _post_process(config, should_make_dir, experiment_id=0):
     return get_forzen_config_box(config.to_dict())
 
 
+
 def _post_process_general_config(general_config, experiment_id=0):
     """Method to post process the general section of the config"""
 
@@ -61,11 +62,18 @@ def _post_process_general_config(general_config, experiment_id=0):
     if not general_config.date:
         general_config.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    general_config.device = torch.device(general_config.device)  # pylint: disable=E1101
+    general_config.device = torch.device(general_config.device)
     general_config.experiment_id = experiment_id
-    env_var_name = "SLURM_JOB_ID"
-    if env_var_name in os.environ:
-        general_config.slurm_id = str(os.environ[env_var_name])
+    slurm_id = []
+    env_var_names = [
+        "SLURM_JOB_ID",
+        "SLURM_STEP_ID"
+    ]
+    for var_name in env_var_names:
+        if var_name in os.environ:
+            slurm_id.append(str(os.environ[var_name]))
+    if slurm_id:
+        general_config.slurm_id = "-".join(slurm_id)
 
     return general_config
 
