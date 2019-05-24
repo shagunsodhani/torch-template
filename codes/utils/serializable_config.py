@@ -16,12 +16,19 @@ class SerializableConfig(Box):
         :param json_kwargs: additional arguments to pass to json.dump(s)
         :return: string of JSON or return of `json.dump`
         """
+        _dict = self.to_serializable_dict()
+
+        return _to_json(_dict, filename=filename,
+                        encoding=encoding, errors=errors, **json_kwargs)
+
+    def to_serializable_dict(self):
         _dict = self.to_dict()
         _dict['general']['device'] = _dict['general']['device'].type
         for key in ["observation_space", "action_space"]:
             _dict["env"][key] = str(_dict['env'][key])
-        return _to_json(_dict, filename=filename,
-                        encoding=encoding, errors=errors, **json_kwargs)
+
+        return _dict
+
 
 
 def _get_config_box(_dict, frozen_box=False):
