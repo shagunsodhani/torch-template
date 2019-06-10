@@ -29,6 +29,20 @@ def get_config(config_id=None, should_make_dir=True, experiment_id=0):
         return config
     return None
 
+def get_config_from_log(log):
+    """Method to prepare the config for all downstream tasks"""
+    boxed_config = get_config_box(log)
+    boxed_config.general.base_path = os.path.dirname(os.path.realpath(__file__)).split('/codes')[0]
+
+    boxed_config.logger.file.path = os.path.join(boxed_config.general.base_path,
+                                                 "logs", boxed_config.general.id)
+    make_dir(path=boxed_config.logger.file.path)
+    make_dir(os.path.join(boxed_config.logger.file.path, "train"))
+    make_dir(os.path.join(boxed_config.logger.file.path, "eval"))
+    boxed_config.logger.file.path = os.path.join(boxed_config.logger.file.path, "log.txt")
+    boxed_config.logger.file.dir = boxed_config.logger.file.path.rsplit("/", 1)[0]
+
+    return boxed_config
 
 def _is_valid_config(config, config_id):
     """Simple tests to check the validity of a given config file"""
@@ -61,7 +75,7 @@ def _post_process_general_config(general_config, experiment_id=0):
     if not general_config.date:
         general_config.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    general_config.device = torch.device(general_config.device)
+    general_config.device = torch.device(general_config.device) # pylint: disable=no-member
     general_config.experiment_id = experiment_id
     slurm_id = []
     env_var_names = [

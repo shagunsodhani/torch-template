@@ -30,12 +30,12 @@ def is_metric(log):
 
 
 @timing
-def upload_logs(file_path):
+def upload_logs(log_file_path):
     """Run the code"""
     logbook = None
     flag_for_new_run = False
-    with open(file_path) as f:
-        for line in f:
+    with open(log_file_path) as log_files:
+        for line in log_files:
             log = read_log(line)
             if not log:
                 continue
@@ -56,17 +56,16 @@ def upload_logs(file_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Optional app description')
+    parser = argparse.ArgumentParser(description='Optional app description') # pylint: disable=invalid-name
     parser.add_argument('config_id', type=str,
-                        help='A required integer positional argument')
+                        help='A required integer positional argument') # pylint: disable=invalid-name
 
-    args = parser.parse_args()
+    args = parser.parse_args() # pylint: disable=invalid-name
 
-    config_id = args.config_id
+    config_id = args.config_id # pylint: disable=invalid-name
 
-    file_paths = [
-        "/home/t-shsodh/projects/bellman/shagun/logs/{}/log.txt".format(config_id)
-    ]
+    file_paths = ["/home/t-shsodh/projects/bellman/shagun/logs/{}/log.txt".format(config_id)] # pylint: disable=invalid-name
+
     for file_path in file_paths:
-        upload_logs(file_path)
+        upload_logs(log_file_path=file_path)
         # time.sleep(30)
