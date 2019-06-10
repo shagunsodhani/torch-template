@@ -12,34 +12,39 @@
         "num_experiments":1,
         "slurm_id": "-1",
     },
-    "wandb":{
+    "logger":{
+        "remote":{
          "api_key": "",
-         "workspace": "",
+         "workspace": "shagun",
          "project_name": "",
          "should_use": True,
          "frequency": 100,
-    },
+        },
+        "file":{
+            "path": "",
+            "should_log_trajectory": False,
+            "should_log_compute_stats": False,
+            },
+        "tensorboard":{
+            "should_use": False,
+            },
+     },
     "model": {
-        "should_train": true,
+        "should_train": True,
         "num_epochs": 100000,
         "persist_frquency": -1,
       # In terms of number of updates
         "evaluate_frequency": -1,
       # In terms of number of updates
-        "persist_best_model": false,
+        "persist_best_model": False,
         "early_stopping_patience": 150,
-        "use_sparse_embedding": false,
+        "use_sparse_embedding": False,
         "save_dir": "",
         "load_path": "7/best_model.tar",
       # the loadpath would look something like this 2/model_epoch_101_timestamp_1534428832.tar
         "should_load_model": false,
         "modes": ["train", "val", "test"],
       # Modes to perform during experiment. Supported values "train", "val", "test"
-    },
-    "log": {
-        "file_path": "",
-        "should_log_trajectory": true,
-        "should_log_compute_stats": false,
     },
     "plot": {
         "base_path": ""

@@ -16,7 +16,7 @@ def write_log(log):
     """This is the default method to write a log.
     It is assumed that the log has already been processed
      before feeding to this method"""
-    get_logger().warning(log)
+    get_logger().info(log)
 
 
 def _add_time_to_log(log):
@@ -96,7 +96,7 @@ def set_logger(config):
     logger = logging.getLogger("default_logger")
     logger.setLevel(logging.INFO)
     # create file handler which logs all the messages
-    fh = logging.FileHandler(config.log.file_path)
+    fh = logging.FileHandler(config.logger.file.path)
     fh.setLevel(logging.INFO)
     # create console handler with a higher log level
     ch = logging.StreamHandler()

@@ -5,7 +5,6 @@ import os
 import torch
 import yaml
 
-from codes.utils.log import set_logger, write_message_logs, write_config_log
 from codes.utils.serializable_config import get_config_box, get_forzen_config_box
 from codes.utils.util import make_dir, \
     get_current_commit_id, merge_nested_dicts
@@ -44,7 +43,7 @@ def _post_process(config, should_make_dir, experiment_id=0):
 
     config.general = _post_process_general_config(config.general, experiment_id)
     config.model = _post_process_model_config(config.model, config, should_make_dir)
-    config.log = _post_process_log_config(config.log, config.general, should_make_dir)
+    config.logger = _post_process_logger_config(config.logger, config.general, should_make_dir)
     config.plot = _post_process_plot_config(config.plot, config.general, should_make_dir)
     return get_forzen_config_box(config.to_dict())
 
@@ -108,24 +107,26 @@ def _post_process_plot_config(plot_config, general_config, should_make_dir):
     return plot_config
 
 
-def _post_process_log_config(log_config, general_config, should_make_dir):
-    """Method to post process the log section of the config"""
+def _post_process_logger_config(logger_config, general_config, should_make_dir):
+    """Method to post process the logger section of the config"""
 
-    if not log_config.file_path:
-        log_config.file_path = os.path.join(general_config.base_path,
+    logger_config.file = _post_process_logger_file_config(logger_file_config=logger_config.file,
+                                                          general_config=general_config,
+                                                          should_make_dir=should_make_dir)
+
+    return logger_config
+
+def _post_process_logger_file_config(logger_file_config, general_config, should_make_dir):
+    """Method to post process the file subsection of the logger section of the config"""
+
+    if not logger_file_config.path:
+        logger_file_config.path = os.path.join(general_config.base_path,
                                             "logs", general_config.id)
         if should_make_dir:
-            make_dir(path=log_config.file_path)
-            make_dir(os.path.join(log_config.file_path, "train"))
-            make_dir(os.path.join(log_config.file_path, "eval"))
-        log_config.file_path = os.path.join(log_config.file_path, "log.txt")
+            make_dir(path=logger_file_config.path)
+            make_dir(os.path.join(logger_file_config.path, "train"))
+            make_dir(os.path.join(logger_file_config.path, "eval"))
+        logger_file_config.path = os.path.join(logger_file_config.path, "log.txt")
 
-    log_config.dir = log_config.file_path.rsplit("/", 1)[0]
-    return log_config
-
-
-if __name__ == "__main__":
-    config = get_config("sample_config")
-    set_logger(config)
-    write_message_logs("torch version = {}".format(torch.__version__))
-    write_config_log(config)
+    logger_file_config.dir = logger_file_config.path.rsplit("/", 1)[0]
+    return logger_file_config
