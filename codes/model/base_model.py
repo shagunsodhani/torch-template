@@ -2,7 +2,6 @@
 import importlib
 import os
 import random
-from time import time
 
 import numpy as np
 import torch
@@ -33,8 +32,11 @@ class BaseModel(nn.Module):
          tracking one loss and optimising another"""
         return self.loss(outputs, labels)
 
-    def save_model(self, epochs=-1, optimizers=None, schedulers=None,
-                   is_best_model=False, index=0):
+    def save_model(self,
+                   epochs=-1,
+                   optimizers=None,
+                   is_best_model=False,
+                   index=0):
         """Method to persist the model.
         Note this method is not well tested"""
         model_config = self.config.model
@@ -166,9 +168,9 @@ class BaseModel(nn.Module):
 
         return optimizers, schedulers
 
-    def forward(self, data): # pylint: disable=W0221
+    def forward(self, data):  # pylint: disable=W0221,W0613
         '''Forward pass of the network'''
-        pass
+        return None
 
     def get_param_count(self):
         """Count the number of params"""

@@ -1,0 +1,8 @@
+torch==1.1
+pyyaml==4.2b4
+python-box==3.4.1
+pylint==2.3.1
+matplotlib==3.0.3
+pytest==4.4.1
+wandb==0.8.1
+tensorboardX==1.7

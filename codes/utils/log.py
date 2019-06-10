@@ -16,12 +16,12 @@ def write_log(log):
     """This is the default method to write a log.
     It is assumed that the log has already been processed
      before feeding to this method"""
-    get_logger().warning(log)
+    get_logger().info(log)
 
 
 def _add_time_to_log(log):
     log["timestamp"] = time.strftime('%I:%M%p %Z %b %d, %Y')
-    return log 
+    return log
 
 def read_log(log):
     """This is the single point to read any log message from the file.
@@ -72,10 +72,10 @@ def write_config_log(config):
     write_log(log)
 
 
-def write_metric_logs(**kwargs):
+def write_metric_logs(metric):
     """Write metric logs"""
     keys = []
-    log, _ = _format_custom_logs(keys=keys, raw_log=flatten_dict(kwargs), _type="metric")
+    log, _ = _format_custom_logs(keys=keys, raw_log=flatten_dict(metric), _type="metric")
     write_log(log)
 
 
@@ -96,18 +96,18 @@ def set_logger(config):
     logger = logging.getLogger("default_logger")
     logger.setLevel(logging.INFO)
     # create file handler which logs all the messages
-    fh = logging.FileHandler(config.log.file_path)
-    fh.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(config.logger.file.path)
+    file_handler.setLevel(logging.INFO)
     # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    stream_handler.setFormatter(formatter)
     # add the handlers to the logger
-    logger.addHandler(fh)
-    logger.addHandler(ch)
+    logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
     return logger
 
 
