@@ -1,9 +1,11 @@
 """Wrapper over wandb api"""
 
 import wandb
+from tensorboardX import SummaryWriter
+
 from codes.utils import log as log_func
 from codes.utils.util import flatten_dict
-from tensorboardX import SummaryWriter
+
 
 class LogBook():
     """Wrapper over comet_ml api"""
@@ -26,13 +28,13 @@ class LogBook():
                        name=config.general.id,
                        dir=config.log.dir)
 
-        self.tb = None
+        self.tensorboard_writer = None
         self.should_use_tb = config.logger.tensorboard.should_use
         if self.should_use_tb:
-            self.tb = SummaryWriter(
-                      comment=config.logger.project_name)
+            self.tensorboard_writer = SummaryWriter(comment=config.logger.project_name)
 
     def log_metrics(self, dic, prefix, step):
+        """Method to log metric"""
         formatted_dict = {}
         for key, val in dic.items():
             formatted_dict[prefix + "_" + key] = val
@@ -65,8 +67,9 @@ class LogBook():
 
             timestep_key = "num_timesteps"
             for key in set(list(metrics.keys())) - set([timestep_key]):
-                self.tb.add_scalar(tag = key, scalar_value=metrics[key], global_step=metrics[timestep_key])
-
+                self.tensorboard_writer.add_scalar(tag=key,
+                                                   scalar_value=metrics[key],
+                                                   global_step=metrics[timestep_key])
 
     def write_compute_logs(self, **kwargs):
         """Write Compute Logs"""
@@ -76,7 +79,8 @@ class LogBook():
 
         num_timesteps = metric_dict.pop("num_timesteps")
         self.log_metrics(dic=metric_dict,
-                         step=num_timesteps)
+                         step=num_timesteps,
+                         prefix="compute")
 
     def write_message_logs(self, message):
         """Write message"""
@@ -87,12 +91,12 @@ class LogBook():
         log_func.write_metadata_logs(**kwargs)
         # self.log_other(key="best_epoch_index", value=kwargs["best_epoch_index"])
 
-    def write_assets(self, **kwargs):
-        """Write assets"""
-        self.log_asset(file_path=kwargs["file_path"],
-                       file_name=kwargs["file_name"],
-                       overwrite=False)
+    # def write_assets(self, **kwargs):
+    #     """Write assets"""
+    #     self.log_asset(file_path=kwargs["file_path"],
+    #                    file_name=kwargs["file_name"],
+    #                    overwrite=False)
 
-    def write_model_graph(self, graph):
-        """Write model graph"""
-        self.set_model_graph(self, graph)
+    # def write_model_graph(self, graph):
+    #     """Write model graph"""
+    #     self.set_model_graph(self, graph)

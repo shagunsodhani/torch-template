@@ -72,10 +72,10 @@ def write_config_log(config):
     write_log(log)
 
 
-def write_metric_logs(**kwargs):
+def write_metric_logs(metric):
     """Write metric logs"""
     keys = []
-    log, _ = _format_custom_logs(keys=keys, raw_log=flatten_dict(kwargs), _type="metric")
+    log, _ = _format_custom_logs(keys=keys, raw_log=flatten_dict(metric), _type="metric")
     write_log(log)
 
 
