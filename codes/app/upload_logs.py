@@ -1,12 +1,12 @@
 """This is the script to uplod the logs to wandb"""
 
-from codes.logbook.logbook import LogBook
-from codes.utils.log import read_log
-from codes.utils.serializable_config import get_frozen_config_box
-from codes.utils.config import get_config_from_log
-from codes.utils.util import timing
-import time
 import argparse
+
+from codes.logbook.logbook import LogBook
+from codes.utils.config import get_config_from_log
+from codes.utils.log import read_log
+from codes.utils.util import timing
+
 
 def is_new_run(log):
     """Method to check if the current log-line indicates a new run"""
@@ -58,14 +58,14 @@ def upload_logs(file_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Optional app description')
     parser.add_argument('config_id', type=str,
-                       help='A required integer positional argument')
+                        help='A required integer positional argument')
 
     args = parser.parse_args()
 
     config_id = args.config_id
 
     file_paths = [
-    "/home/t-shsodh/projects/bellman/shagun/logs/{}/log.txt".format(config_id)
+        "/home/t-shsodh/projects/bellman/shagun/logs/{}/log.txt".format(config_id)
     ]
     for file_path in file_paths:
         upload_logs(file_path)
