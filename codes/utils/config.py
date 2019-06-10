@@ -121,7 +121,8 @@ def _post_process_logger_file_config(logger_file_config, general_config, should_
 
     if not logger_file_config.path:
         logger_file_config.path = os.path.join(general_config.base_path,
-                                            "logs", general_config.id)
+                                               "logs",
+                                               general_config.id)
         if should_make_dir:
             make_dir(path=logger_file_config.path)
             make_dir(os.path.join(logger_file_config.path, "train"))

@@ -22,6 +22,7 @@ class SerializableConfig(Box):
                         encoding=encoding, errors=errors, **json_kwargs)
 
     def to_serializable_dict(self):
+        """Method to serialize the config object as a dictionary"""
         _dict = self.to_dict()
         _dict['general']['device'] = _dict['general']['device'].type
         # for key in ["observation_space", "action_space"]:

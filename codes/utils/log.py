@@ -21,7 +21,7 @@ def write_log(log):
 
 def _add_time_to_log(log):
     log["timestamp"] = time.strftime('%I:%M%p %Z %b %d, %Y')
-    return log 
+    return log
 
 def read_log(log):
     """This is the single point to read any log message from the file.
@@ -96,18 +96,18 @@ def set_logger(config):
     logger = logging.getLogger("default_logger")
     logger.setLevel(logging.INFO)
     # create file handler which logs all the messages
-    fh = logging.FileHandler(config.logger.file.path)
-    fh.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(config.logger.file.path)
+    file_handler.setLevel(logging.INFO)
     # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    stream_handler.setFormatter(formatter)
     # add the handlers to the logger
-    logger.addHandler(fh)
-    logger.addHandler(ch)
+    logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
     return logger
 
 

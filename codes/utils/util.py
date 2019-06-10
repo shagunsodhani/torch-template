@@ -230,7 +230,7 @@ def map_observation_space_to_shape(obs):
 
     if obs.__class__.__name__ == "Discrete":
         return (obs.n,)
-    elif obs.__class__.__name__ == "Box":
+    if obs.__class__.__name__ == "Box":
         return obs.shape
     return obs.shape
 
