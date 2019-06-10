@@ -3,28 +3,34 @@
 import wandb
 from codes.utils import log as log_func
 from codes.utils.util import flatten_dict
-
+from tensorboardX import SummaryWriter
 
 class LogBook():
     """Wrapper over comet_ml api"""
 
     def __init__(self, config):
-        self._experiment_id = config.general.experiment_id
+        self._experiment_id = config.experiment_id
         self.metrics_to_record = \
             [
                 "mode ",
                 "num_timesteps"
             ]
 
-        flattened_config = flatten_dict(config.to_serializable_dict(), sep="_")
+        flattened_config = flatten_dict(config, sep="_")
 
-        self.should_use_remote_logger = config.wandb.should_use
+        self.should_use_remote_logger = config.logger.remote.should_use
 
         if self.should_use_remote_logger:
             wandb.init(config=flattened_config,
-                       project=config.cometml.project_name,
+                       project=config.logger.project_name,
                        name=config.general.id,
                        dir=config.log.dir)
+
+        self.tb = None
+        self.should_use_tb = config.logger.tensorboard.should_use
+        if self.should_use_tb:
+            self.tb = SummaryWriter(
+                      comment=config.logger.project_name)
 
     def log_metrics(self, dic, prefix, step):
         formatted_dict = {}
@@ -39,21 +45,28 @@ class LogBook():
         flatten_config = flatten_dict(config, sep="_")
         flatten_config['experiment_id'] = self._experiment_id
 
-    def write_metric_logs(self, **kwargs):
+    def write_metric_logs(self, metrics):
         """Write Metric"""
-        kwargs['experiment_id'] = self._experiment_id
-        log_func.write_metric_logs(**kwargs)
-        flattened_metrics = flatten_dict(kwargs, sep="_")
+        metrics['experiment_id'] = self._experiment_id
+        log_func.write_metric_logs(metrics)
+        flattened_metrics = flatten_dict(metrics, sep="_")
 
         metric_dict = {
             key: flattened_metrics[key]
             for key in self.metrics_to_record if key in flattened_metrics
         }
-        prefix = kwargs['mode']
+        prefix = metrics.get("mode", None)
         num_timesteps = metric_dict.pop("num_timesteps")
         self.log_metrics(dic=metric_dict,
                          prefix=prefix,
                          step=num_timesteps)
+
+        if self.should_use_tb:
+
+            timestep_key = "num_timesteps"
+            for key in set(list(metrics.keys())) - set([timestep_key]):
+                self.tb.add_scalar(tag = key, scalar_value=metrics[key], global_step=metrics[timestep_key])
+
 
     def write_compute_logs(self, **kwargs):
         """Write Compute Logs"""
