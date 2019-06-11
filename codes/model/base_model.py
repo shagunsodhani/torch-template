@@ -20,7 +20,7 @@ class BaseModel(nn.Module):
         self.description = "This is the base class for all the models. " \
                            "All the other models should extend this class. " \
                            "It is not to be used directly."
-        self.criteria = nn.BCEWithLogitsLoss()
+        self.criteria = nn.MSELoss(reduction="mean")
         self.epsilon = 1e-6
 
     def loss(self, outputs, labels):
@@ -33,7 +33,7 @@ class BaseModel(nn.Module):
         return self.loss(outputs, labels)
 
     def save_model(self,
-                   epochs=-1,
+                   current_minibatch_idx=-1,
                    optimizers=None,
                    is_best_model=False,
                    index=0):
@@ -41,7 +41,7 @@ class BaseModel(nn.Module):
         Note this method is not well tested"""
         model_config = self.config.model
         state = {
-            "epochs": epochs + 1,
+            "current_minibatch_idx": current_minibatch_idx + 1,
             "state_dict": self.state_dict(),
             "optimizers": [optimizer.state_dict() for optimizer in optimizers],
             "np_random_state": np.random.get_state(),
@@ -58,7 +58,7 @@ class BaseModel(nn.Module):
                                     index))
         else:
             path = os.path.join(model_config.save_dir,
-                                str(epochs + 1),
+                                str(current_minibatch_idx + 1),
                                 "{}_agent_id_{}.tar".format(
                                     self.config.general.experiment_id,
                                     index))
