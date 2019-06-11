@@ -97,7 +97,7 @@ def _post_process_model_config(model_config, config, should_make_dir):
     general_config = config.general
 
     if not model_config.save_dir:
-        model_config.save_dir = os.path.join(general_config.base_path, "model", general_config.id)
+        model_config.save_dir = os.path.join(general_config.base_path, "models", general_config.id)
     elif model_config.save_dir[0] != "/":
         model_config.save_dir = os.path.join(general_config.base_path, model_config.save_dir)
 
