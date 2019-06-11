@@ -91,6 +91,9 @@ class LogBook():
         log_func.write_metadata_logs(**kwargs)
         # self.log_other(key="best_epoch_index", value=kwargs["best_epoch_index"])
 
+    def watch_model(self, model):
+        """Method to track the gradients of the model"""
+        wandb.watch(models=model)
     # def write_assets(self, **kwargs):
     #     """Write assets"""
     #     self.log_asset(file_path=kwargs["file_path"],

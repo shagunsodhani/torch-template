@@ -19,6 +19,7 @@ class Experiment():
         self.model = model
         self.logbook.watch_model(model=self.model)
         self.optimizer = self.model.get_optimizers()[0]
+        self.logbook.watch_model(model=self.model)
         self._mode = None
         self.dataloaders = get_dataloaders(
             config=config,
