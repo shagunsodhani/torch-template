@@ -107,6 +107,9 @@ def _post_process_model_config(model_config, config, should_make_dir):
     model_config.load_path = os.path.join(general_config.base_path,
                                           "model", model_config.load_path)
 
+    for key in ["learning_rate", "eps"]:
+        model_config.optim[key] = float(model_config.optim[key])
+
     return model_config
 
 

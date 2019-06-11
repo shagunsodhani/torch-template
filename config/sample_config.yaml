@@ -45,6 +45,15 @@
         "should_load_model": false,
         "modes": ["train", "val", "test"],
       # Modes to perform during experiment. Supported values "train", "val", "test"
+        "master":{
+            "num_workers": 2,
+        },
+        "optim":{
+            "name": "Adam",
+            "learning_rate": 0.001,
+            "weight_decay": 0.0,
+            "eps": 1e-08
+        }
     },
     "plot": {
         "base_path": ""

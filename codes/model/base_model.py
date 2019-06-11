@@ -130,23 +130,21 @@ class BaseModel(nn.Module):
 
     def _register_params_to_optimizer(self, model_params):
         """Method to map params to an optimizer"""
-        agent = self.config.model.policy.primitive.agent
-        optimizer_config = self.config.model[agent].optimizer
-        optimizer_cls = getattr(importlib.import_module("torch.optim"), optimizer_config.name)
-        if optimizer_config.name == "RMSprop":
+        optim_config = self.config.model.optim
+        optimizer_cls = getattr(importlib.import_module("torch.optim"), optim_config.name)
+        optim_name = optim_config.name.lower()
+        if optim_name == "adam":
             return optimizer_cls(
                 model_params,
-                alpha=optimizer_config.alpha,
-                lr=optimizer_config.learning_rate,
-                weight_decay=optimizer_config.l2_penalty,
-                eps=optimizer_config.eps
+                lr=optim_config.learning_rate,
+                weight_decay=optim_config.weight_decay,
+                eps=optim_config.eps
             )
-
         return optimizer_cls(
             model_params,
-            lr=optimizer_config.learning_rate,
-            weight_decay=optimizer_config.l2_penalty,
-            eps=optimizer_config.eps
+            lr=optim_config.learning_rate,
+            weight_decay=optim_config.weight_decay,
+            eps=optim_config.eps
         )
 
     def _register_optimizers_to_schedulers(self, optimizers):
