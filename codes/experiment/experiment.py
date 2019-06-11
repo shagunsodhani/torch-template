@@ -16,14 +16,21 @@ class Experiment():
         self.logbook = LogBook(self.config)
         self.support_modes = self.config.model.modes
         self.device = self.config.general.device
-        self.models = models
+        self.model = model
+        self.logbook.watch_model(model=self.model)
+        self.optimizer = self.model.get_optimizers()[0]
+        self._mode = None
+        self.dataloaders = get_dataloaders(
+            config=config,
+            modes=["train", "val", "test"]
+        )
         self.reset_experiment()
         self.startup_logs()
         # torch.autograd.set_detect_anomaly(mode=True)
 
     def reset_experiment(self):
         """Reset the experiment"""
-        pass # pylint: disable=W0107
+        self._mode = None
 
     def write_config_log(self, config):
         """Method to interface with the logbook"""
