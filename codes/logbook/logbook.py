@@ -11,22 +11,22 @@ class LogBook():
     """Wrapper over comet_ml api"""
 
     def __init__(self, config):
-        self._experiment_id = config.experiment_id
+        self._experiment_id = config.general.experiment_id
         self.metrics_to_record = \
             [
                 "mode ",
                 "num_timesteps"
             ]
 
-        flattened_config = flatten_dict(config, sep="_")
+        flattened_config = flatten_dict(config.to_serializable_dict(), sep="_")
 
         self.should_use_remote_logger = config.logger.remote.should_use
 
         if self.should_use_remote_logger:
             wandb.init(config=flattened_config,
-                       project=config.logger.project_name,
+                       project=config.logger.remote.project_name,
                        name=config.general.id,
-                       dir=config.log.dir)
+                       dir=config.logger.file.dir)
 
         self.tensorboard_writer = None
         self.should_use_tb = config.logger.tensorboard.should_use
