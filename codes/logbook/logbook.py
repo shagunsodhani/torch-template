@@ -39,7 +39,7 @@ class LogBook():
         for key, val in dic.items():
             formatted_dict[prefix + "_" + key] = val
         if self.should_use_remote_logger:
-            wandb.log(formatted_dict, step)
+            wandb.log(formatted_dict, step=step)
 
     def write_config_log(self, config):
         """Write config"""
