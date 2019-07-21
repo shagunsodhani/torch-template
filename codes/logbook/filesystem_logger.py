@@ -57,7 +57,7 @@ def write_message_logs(message, experiment_id=0):
     kwargs = {"messgae": message, "experiment_id": experiment_id}
     log, _ = format_custom_logs(keys=[],
                                 raw_log=kwargs,
-                                type="print")
+                                log_type="print")
     write_log(log)
 
 
@@ -66,7 +66,7 @@ def write_trajectory_logs(trajectory, experiment_id=0):
     kwargs = {"message": trajectory, "experiment_id": experiment_id}
     log, _ = format_custom_logs(keys=[],
                                 raw_log=kwargs,
-                                type="trajectory")
+                                log_type="trajectory")
     write_log(log)
 
 
@@ -75,7 +75,7 @@ def write_config_log(config):
     config_to_write = json.loads(config.to_json())
     log, _ = format_custom_logs(keys=[],
                                 raw_log=config_to_write,
-                                type="config")
+                                log_type="config")
     write_log(log)
 
 
@@ -84,7 +84,7 @@ def write_metric_logs(metric):
     keys = []
     log, _ = format_custom_logs(keys=keys,
                                 raw_log=flatten_dict(metric),
-                                type="metric")
+                                log_type="metric")
     write_log(log)
 
 
@@ -92,7 +92,7 @@ def write_metadata_logs(metadata):
     """Write metadata logs"""
     log, _ = format_custom_logs(keys=[],
                                 raw_log=metadata,
-                                type="metadata")
+                                log_type="metadata")
     write_log(log)
 
 
