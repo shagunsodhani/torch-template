@@ -88,10 +88,10 @@ def write_metric_logs(metric):
     write_log(log)
 
 
-def write_metadata_logs(**kwargs):
+def write_metadata_logs(metadata):
     """Write metadata logs"""
-    log, _ = format_custom_logs(keys=["best_epoch_index"],
-                                raw_log=kwargs,
+    log, _ = format_custom_logs(keys=[],
+                                raw_log=metadata,
                                 type="metadata")
     write_log(log)
 

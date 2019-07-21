@@ -3,7 +3,7 @@
 import wandb
 from tensorboardX import SummaryWriter
 
-from codes.utils import log as log_func
+from codes.logbook import filesystem_logger as fs_log
 from codes.utils.util import flatten_dict
 
 
@@ -33,7 +33,7 @@ class LogBook():
         if self.should_use_tb:
             self.tensorboard_writer = SummaryWriter(comment=config.logger.project_name)
 
-    def log_metrics(self, dic, prefix, step):
+    def _log_metrics(self, dic, prefix, step):
         """Method to log metric"""
         formatted_dict = {}
         for key, val in dic.items():
@@ -43,14 +43,14 @@ class LogBook():
 
     def write_config_log(self, config):
         """Write config"""
-        log_func.write_config_log(config)
+        fs_log.write_config_log(config)
         flatten_config = flatten_dict(config, sep="_")
         flatten_config['experiment_id'] = self._experiment_id
 
     def write_metric_logs(self, metrics):
         """Write Metric"""
         metrics['experiment_id'] = self._experiment_id
-        log_func.write_metric_logs(metrics)
+        fs_log.write_metric_logs(metrics)
         flattened_metrics = flatten_dict(metrics, sep="_")
 
         metric_dict = {
@@ -59,9 +59,9 @@ class LogBook():
         }
         prefix = metrics.get("mode", None)
         num_timesteps = metric_dict.pop("num_timesteps")
-        self.log_metrics(dic=metric_dict,
-                         prefix=prefix,
-                         step=num_timesteps)
+        self._log_metrics(dic=metric_dict,
+                          prefix=prefix,
+                          step=num_timesteps)
 
         if self.should_use_tb:
 
@@ -74,32 +74,24 @@ class LogBook():
     def write_compute_logs(self, **kwargs):
         """Write Compute Logs"""
         kwargs['experiment_id'] = self._experiment_id
-        log_func.write_metric_logs(**kwargs)
+        fs_log.write_metric_logs(**kwargs)
         metric_dict = flatten_dict(kwargs, sep="_")
 
         num_timesteps = metric_dict.pop("num_timesteps")
-        self.log_metrics(dic=metric_dict,
-                         step=num_timesteps,
-                         prefix="compute")
+        self._log_metrics(dic=metric_dict,
+                          step=num_timesteps,
+                          prefix="compute")
 
     def write_message_logs(self, message):
-        """Write message"""
-        log_func.write_message_logs(message, experiment_id=self._experiment_id)
+        """Write message logs"""
+        fs_log.write_message_logs(message, experiment_id=self._experiment_id)
 
-    def write_metadata_logs(self, **kwargs):
+    def write_metadata_logs(self, metadata):
         """Write metadata"""
-        log_func.write_metadata_logs(**kwargs)
+        metadata["experiment_id"] = self._experiment_id
+        fs_log.write_metadata_logs(metadata)
         # self.log_other(key="best_epoch_index", value=kwargs["best_epoch_index"])
 
     def watch_model(self, model):
         """Method to track the gradients of the model"""
-        wandb.watch(models=model)
-    # def write_assets(self, **kwargs):
-    #     """Write assets"""
-    #     self.log_asset(file_path=kwargs["file_path"],
-    #                    file_name=kwargs["file_name"],
-    #                    overwrite=False)
-
-    # def write_model_graph(self, graph):
-    #     """Write model graph"""
-    #     self.set_model_graph(self, graph)
+        wandb.watch(models=model, log="all")
