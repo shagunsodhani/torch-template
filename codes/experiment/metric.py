@@ -4,7 +4,7 @@ from copy import deepcopy
 from codes.utils.util import merge_nested_dicts
 
 
-def get_default_metrics(mode, level="individual"):
+def get_default_metric_dict(mode, level="individual"):
     """Method to return a defualt metric dict"""
     _, keys_to_add, keys_to_replace = _get_metric_keys()
 
@@ -38,7 +38,7 @@ def prepare_metric_dict_to_log(current_metric_dict):
     keys_to_normalize = set(keys_to_add) - set([total_num_key, total_time_key])
     for key in keys_to_normalize:
         new_key = ("_".join(key.split("_")[1:])).strip("_")
-        metric_dict[new_key] = metric_dict.pop(key)/total_num
+        metric_dict[new_key] = metric_dict.pop(key) / total_num
     return metric_dict
 
 

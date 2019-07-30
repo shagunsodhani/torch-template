@@ -2,9 +2,9 @@
 
 import argparse
 
+from codes.logbook.filesystem_logger import read_log
 from codes.logbook.logbook import LogBook
 from codes.utils.config import get_config_from_log
-from codes.utils.log import read_log
 from codes.utils.util import timing
 
 
@@ -56,15 +56,15 @@ def upload_logs(log_file_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Optional app description') # pylint: disable=invalid-name
+    parser = argparse.ArgumentParser(description='Optional app description')  # pylint: disable=invalid-name
     parser.add_argument('config_id', type=str,
-                        help='A required integer positional argument') # pylint: disable=invalid-name
+                        help='A required integer positional argument')  # pylint: disable=invalid-name
 
-    args = parser.parse_args() # pylint: disable=invalid-name
+    args = parser.parse_args()  # pylint: disable=invalid-name
 
-    config_id = args.config_id # pylint: disable=invalid-name
+    config_id = args.config_id  # pylint: disable=invalid-name
 
-    file_paths = ["/home/t-shsodh/projects/bellman/shagun/logs/{}/log.txt".format(config_id)] # pylint: disable=invalid-name
+    file_paths = ["logs/{}/log.txt".format(config_id)]  # pylint: disable=invalid-name
 
     for file_path in file_paths:
         upload_logs(log_file_path=file_path)

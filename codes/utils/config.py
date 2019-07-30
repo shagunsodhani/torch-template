@@ -29,6 +29,7 @@ def get_config(config_id=None, should_make_dir=True, experiment_id=0):
         return config
     return None
 
+
 def get_config_from_log(log):
     """Method to prepare the config for all downstream tasks"""
     boxed_config = get_config_box(log)
@@ -43,6 +44,7 @@ def get_config_from_log(log):
     boxed_config.logger.file.dir = boxed_config.logger.file.path.rsplit("/", 1)[0]
 
     return boxed_config
+
 
 def _is_valid_config(config, config_id):
     """Simple tests to check the validity of a given config file"""
@@ -62,7 +64,6 @@ def _post_process(config, should_make_dir, experiment_id=0):
     return get_forzen_config_box(config.to_dict())
 
 
-
 def _post_process_general_config(general_config, experiment_id=0):
     """Method to post process the general section of the config"""
 
@@ -75,7 +76,7 @@ def _post_process_general_config(general_config, experiment_id=0):
     if not general_config.date:
         general_config.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    general_config.device = torch.device(general_config.device) # pylint: disable=no-member
+    general_config.device = torch.device(general_config.device)  # pylint: disable=no-member
     general_config.experiment_id = experiment_id
     slurm_id = []
     env_var_names = [
@@ -132,6 +133,7 @@ def _post_process_logger_config(logger_config, general_config, should_make_dir):
                                                           should_make_dir=should_make_dir)
 
     return logger_config
+
 
 def _post_process_logger_file_config(logger_file_config, general_config, should_make_dir):
     """Method to post process the file subsection of the logger section of the config"""
