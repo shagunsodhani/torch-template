@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn, optim
 
-from codes.utils.log import write_message_logs
+from codes.logbook.filesystem_logger import write_message_logs
 
 
 class BaseModel(nn.Module):
