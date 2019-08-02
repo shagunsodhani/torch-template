@@ -15,7 +15,7 @@
     "logger":{
         "remote":{
          "api_key": "",
-         "workspace": "shagun",
+         "entity": "shagun",
          "project_name": "",
          "should_use": True,
          "frequency": 100,

@@ -26,6 +26,7 @@ class LogBook():
             wandb.init(config=flattened_config,
                        project=config.logger.remote.project_name,
                        name=config.general.id,
+                       entity=config.logger.remote.entity,
                        dir=config.logger.file.dir)
 
         self.tensorboard_writer = None
