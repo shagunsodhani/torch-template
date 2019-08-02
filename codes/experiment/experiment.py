@@ -161,9 +161,9 @@ class Experiment():
         """Method to save the experiment"""
         if self.config.model.persist_frquency > 0 \
                 and epochs % self.config.model.persist_frquency == 0:
-            self.model.save(epochs)
-            # for model in self.models:
-            #     model.save(epochs)
+            self.model.save(epoch=epochs,
+                            optimizer=self.optimizer,
+                            is_best_model=False)
 
 
 def prepare_and_run_experiment(config, model):

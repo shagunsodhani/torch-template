@@ -44,7 +44,7 @@ class GradStudent():
                 config = get_config(self.config.general.id, experiment_id=experiment_id)
                 proc = mp.Process(target=prepare_and_run_experiment,
                                   args=(config,
-                                        self.models))
+                                        self.model))
                 proc.start()
                 processes.append(proc)
             for proc in processes:
