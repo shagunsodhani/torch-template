@@ -26,6 +26,7 @@ class LogBook():
 
         if self.should_use_remote_logger:
             wandb.init(config=flattened_config,
+                       notes=config.general.description,
                        project=config.logger.remote.project_name,
                        name=config.general.id,
                        entity=config.logger.remote.entity,
