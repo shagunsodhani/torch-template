@@ -1,5 +1,7 @@
 """Wrapper over wandb api"""
 
+import json
+
 import wandb
 from tensorboardX import SummaryWriter
 
@@ -28,6 +30,12 @@ class LogBook():
                        name=config.general.id,
                        entity=config.logger.remote.entity,
                        dir=config.logger.file.dir)
+
+            dir_to_save_config = f"{wandb.run.dir}/config"
+            make_dir(dir_to_save_config)
+
+            with open(f"{dir_to_save_config}/{config.general.id}.yaml", "w") as f:
+                f.write(json.dumps(config.to_serializable_dict(), indent=4))
 
         self.tensorboard_writer = None
         self.should_use_tb = config.logger.tensorboard.should_use
