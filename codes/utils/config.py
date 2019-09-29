@@ -14,7 +14,7 @@ def read_config_file(config_id="config"):
     """Method to read a config file"""
     path = os.path.dirname(os.path.realpath(__file__)).split('/codes')[0]
     config_name = "{}.yaml".format(config_id)
-    return yaml.load(open(os.path.join(path, 'config', config_name)))
+    return yaml.safe_load(open(os.path.join(path, 'config', config_name)))
 
 
 def get_config(config_id=None, should_make_dir=True, experiment_id=0):
