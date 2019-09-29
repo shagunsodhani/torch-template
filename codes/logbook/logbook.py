@@ -6,7 +6,7 @@ import wandb
 from tensorboardX import SummaryWriter
 
 from codes.logbook import filesystem_logger as fs_log
-from codes.utils.util import flatten_dict
+from codes.utils.util import flatten_dict, make_dir
 
 
 class LogBook():
