@@ -8,9 +8,10 @@ import torch
 from torch import nn, optim
 
 from codes.logbook.filesystem_logger import write_message_logs
+from codes.utils.checkpointable import Checkpointable
 
 
-class BaseModel(nn.Module):
+class BaseModel(nn.Module, Checkpointable):
     """Base class for all models"""
 
     def __init__(self, config):
@@ -32,26 +33,31 @@ class BaseModel(nn.Module):
          tracking one loss and optimising another"""
         return self.loss(outputs, labels)
 
-    def save_model(self,
-                   epoch=None,
-                   optimizer=None,
-                   is_best_model=False):
-        """Method to persist the model.
+    def save(self, epoch):
+        """Public method to save the model"""
+        self._save_model(epoch=epoch, is_best_model=False)
+
+    def _save_model(self, epoch=None, is_best_model=False):
+        """Private method to persist the model.
         Note this method is not well tested"""
         model_config = self.config.model
         state = {
-            "epoch": epoch,
-            "state_dict": self.state_dict(),
-            "optimizers": optimizer.state_dict(),
-            "np_random_state": np.random.get_state(),
-            "python_random_state": random.getstate(),
-            "pytorch_random_state": torch.get_rng_state(),
+            "metadata": {"epoch": epoch, "is_best_model": False,},
+            "model": {"state_dict": self.state_dict(),},
+        "optimizers": [{"state_dict": optimizer.state_dict()}
+                for optimizer in self.get_optimizers()],
+            "random_state": {
+                "np": np.random.get_state(),
+                "python": random.getstate(),
+                "pytorch_random_state": torch.get_rng_state(),
+            },
             # "schedulers": [scheduler.state_dict() for scheduler in schedulers]
         }
         if is_best_model:
             path = os.path.join(model_config.save_dir,
                                 "best_model_epoch_{}.tar".format(
                                     epoch))
+            state["metadata"]["is_best_model"] = True
         else:
             path = os.path.join(model_config.save_dir,
                                 "current_model_epoch_{}.tar".format(
@@ -60,7 +66,13 @@ class BaseModel(nn.Module):
         torch.save(state, path)
         write_message_logs("saved model to path = {}".format(path))
 
-    def load_model(self, index=0, should_load_optimizers=False,
+    def load(self, epoch):
+        """Public method to load the model"""
+        return self._load_model(
+            index=epoch, should_load_optimizers=False, optimizers=None, schedulers=None
+        )
+
+    def _load_model(self, index=0, should_load_optimizers=False,
                    optimizers=None, schedulers=None):
         """Method to load the model"""
         model_config = self.config.model
@@ -79,16 +91,17 @@ class BaseModel(nn.Module):
             checkpoint = torch.load(path)
         else:
             checkpoint = torch.load(path, map_location=lambda storage, loc: storage)
-        epochs = checkpoint["epochs"]
-        load_metadata(checkpoint)
-        self._load_model_params(checkpoint["state_dict"])
+        epochs = checkpoint["metadata"]["epoch"]
+        load_random_state(checkpoint["random_state"])
+        self._load_model_params(checkpoint["model"]["state_dict"])
 
         if should_load_optimizers:
             if optimizers is None:
                 optimizers = self.get_optimizers()
             for optim_index, optimizer in enumerate(optimizers):
-                # optimizer.load_state_dict(checkpoint[OPTIMIZERS][optim_index]())
-                optimizer.load_state_dict(checkpoint["optimizers"][optim_index])
+                optimizer.load_state_dict(
+                    checkpoint["optimizers"][optim_index]["state_dict"]
+                )
             # for scheduler_index, scheduler in enumerate(schedulers):
             # optimizer.load_state_dict(checkpoint[OPTIMIZERS][optim_index]())
             # scheduler.load_state_dict(checkpoint["schedulers"][scheduler_index])
@@ -179,8 +192,8 @@ class BaseModel(nn.Module):
         return self.description
 
 
-def load_metadata(checkpoint):
-    """Method to load the model metadata"""
-    np.random.set_state(checkpoint["np_random_state"])
-    random.setstate(checkpoint["python_random_state"])
-    torch.set_rng_state(checkpoint["pytorch_random_state"])
+def load_random_state(random_state):
+    """Method to load the random state"""
+    np.random.set_state(random_state["np"])
+    random.setstate(random_state["python"])
+    torch.set_rng_state(random_state["pytorch"])
