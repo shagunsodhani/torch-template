@@ -1,21 +1,31 @@
 """GradStudent is the orchestrator of the experiment"""
 
+import pickle as pkl
 import time
+from os import getcwd, listdir, path
 
 import torch
 import torch.multiprocessing as mp
+from tqdm import tqdm
 
-from codes.experiment.experiment import prepare_and_run_experiment
-from codes.logbook.filesystem_logger import set_logger, write_message_logs, write_config_log
-from codes.model.base_model import BaseModel
+from codes.experiment.checkpointable_experiment import prepare_and_run_experiment as exp
+from codes.experiment import signature_experiment as sig_exp
+
+# from codes.experiment.signature_experiment import prepare_and_run_experiment as sig_exp
+from codes.logbook.filesystem_logger import write_config_log, write_message_logs
+from codes.logbook.logbook import LogBook
 from codes.utils.config import get_config
-from codes.utils.util import set_seed
+from codes.utils.data import DataUtility
+from codes.utils.util import _import_module, set_seed
+from codes.utils.checkpointable import Checkpointable
+from typing import Optional
 
 
-class GradStudent():
-    """GradStudent Class
+class CheckpointableGradStudent(Checkpointable):
+    """Checkpointable GradStudent Class
 
-    In practice, it is a thin class to support multiple experiments at once."""
+    This class provides a mechanism to checkpoint the (otherwise stateless) GradStudent
+    """
 
     def __init__(self, config_id):
         self.config = bootstrap_config(config_id)
@@ -53,6 +63,16 @@ class GradStudent():
             prepare_and_run_experiment(config=self.config,
                                        model=self.model)
 
+
+    def save(self, epoch: Optional[int] = None) -> None:
+        state = {"config": self.config}
+        path_to_save = path.join(self.config.model.save_dir, "config.tar")
+        torch.save(state, path_to_save)
+        write_message_logs("saved config to path = {}".format(path_to_save))
+        self.experiment.save(epoch=epoch)
+
+    def load(self, epoch: Optional[int] = None) -> None:
+        self.experiment.load(epoch=epoch)
 
 def bootstrap_config(config_id):
     """Method to generate the config (using config id) and set seeds"""
