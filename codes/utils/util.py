@@ -156,7 +156,8 @@ def log_pdf(x, mu, std):
     distribution with mean = mu and standard deviation = std
     Taken from: https://chrisorm.github.io/VI-MC-PYT.html"""
 
-    return -0.5 * torch.log(2 * np.pi * std ** 2) - (0.5 * (1 / (std ** 2)) * (x - mu) ** 2) # pylint: disable=no-member
+    return -0.5 * torch.log(2 * np.pi * std ** 2) - (
+            0.5 * (1 / (std ** 2)) * (x - mu) ** 2)  # pylint: disable=no-member
 
 
 def running_mean(x, N):

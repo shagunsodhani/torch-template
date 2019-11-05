@@ -32,7 +32,6 @@ class SerializableConfig(Box):
         return _dict
 
 
-
 def _get_config_box(_dict, frozen_box=False):
     """Wrapper to get a box"""
     return SerializableConfig(

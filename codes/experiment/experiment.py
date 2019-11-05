@@ -11,7 +11,7 @@ from codes.utils.util import get_cpu_stats
 class Experiment():
     """Experiment Class"""
 
-    def __init__(self, config, models):
+    def __init__(self, config, model):
         self.config = config
         self.logbook = LogBook(self.config)
         self.support_modes = self.config.model.modes
@@ -75,11 +75,11 @@ class Experiment():
 
     def set_eval_mode(self):
         """Prepare for the eval mode"""
-        pass # pylint: disable=W0107
+        pass  # pylint: disable=W0107
 
     def set_train_mode(self):
         """Prepare for the train mode"""
-        pass # pylint: disable=W0107
+        pass  # pylint: disable=W0107
 
     def run(self):
         """Method to run the experiment"""
@@ -161,11 +161,12 @@ class Experiment():
         """Method to save the experiment"""
         if self.config.model.persist_frquency > 0 \
                 and epochs % self.config.model.persist_frquency == 0:
-            for model in self.models:
-                model.save(epochs)
+            self.model.save(epoch=epochs,
+                            optimizer=self.optimizer,
+                            is_best_model=False)
 
 
-def prepare_and_run_experiment(config, models):
+def prepare_and_run_experiment(config, model):
     """Primary method to interact with the Experiments"""
-    experiment = Experiment(config, models)
+    experiment = Experiment(config, model)
     experiment.run()

@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn, optim
 
-from codes.utils.log import write_message_logs
+from codes.logbook.filesystem_logger import write_message_logs
 
 
 class BaseModel(nn.Module):
@@ -33,36 +33,30 @@ class BaseModel(nn.Module):
         return self.loss(outputs, labels)
 
     def save_model(self,
-                   current_minibatch_idx=-1,
-                   optimizers=None,
-                   is_best_model=False,
-                   index=0):
+                   epoch=None,
+                   optimizer=None,
+                   is_best_model=False):
         """Method to persist the model.
         Note this method is not well tested"""
         model_config = self.config.model
         state = {
-            "current_minibatch_idx": current_minibatch_idx + 1,
+            "epoch": epoch,
             "state_dict": self.state_dict(),
-            "optimizers": [optimizer.state_dict() for optimizer in optimizers],
+            "optimizers": optimizer.state_dict(),
             "np_random_state": np.random.get_state(),
             "python_random_state": random.getstate(),
             "pytorch_random_state": torch.get_rng_state(),
-            "index": index,
             # "schedulers": [scheduler.state_dict() for scheduler in schedulers]
         }
         if is_best_model:
             path = os.path.join(model_config.save_dir,
-                                "best",
-                                "{}_agent_id_{}.tar".format(
-                                    self.config.general.experiment_id,
-                                    index))
+                                "best_model_epoch_{}.tar".format(
+                                    epoch))
         else:
             path = os.path.join(model_config.save_dir,
-                                str(current_minibatch_idx + 1),
-                                "{}_agent_id_{}.tar".format(
-                                    self.config.general.experiment_id,
-                                    index))
-
+                                "current_model_epoch_{}.tar".format(
+                                    epoch)
+                                )
         torch.save(state, path)
         write_message_logs("saved model to path = {}".format(path))
 
