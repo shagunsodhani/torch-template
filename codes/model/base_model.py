@@ -3,6 +3,7 @@ import importlib
 import os
 import random
 
+from typing import List, Optional
 import numpy as np
 import torch
 from torch import nn, optim
@@ -33,14 +34,28 @@ class BaseModel(nn.Module, Checkpointable):
          tracking one loss and optimising another"""
         return self.loss(outputs, labels)
 
-    def save(self, epoch):
-        """Public method to save the model"""
-        self._save_model(epoch=epoch, is_best_model=False)
-
-    def _save_model(self, epoch=None, is_best_model=False):
-        """Private method to persist the model.
+    def save(
+        self,
+        epoch: int,
+        optimizers: Optional[List[torch.optim.Optimizer]],
+        is_best_model: bool = False,
+    ) -> None:
+        """Method to persist the model.
         Note this method is not well tested"""
         model_config = self.config.model
+        # Updating the information about the epoch
+        # Check if the epoch_state is already saved on the file system
+        epoch_state_path = os.path.join(model_config.save_dir, "epoch.tar")
+
+        if os.path.exists(epoch_state_path):
+            epoch_state = torch.load(epoch_state_path)
+        else:
+            epoch_state = {"best": epoch}
+        epoch_state["current"] = epoch
+        if is_best_model:
+            epoch_state["best"] = epoch
+        torch.save(epoch_state, epoch_state_path)
+
         state = {
             "metadata": {"epoch": epoch, "is_best_model": False,},
             "model": {"state_dict": self.state_dict(),},
@@ -49,35 +64,39 @@ class BaseModel(nn.Module, Checkpointable):
             "random_state": {
                 "np": np.random.get_state(),
                 "python": random.getstate(),
-                "pytorch_random_state": torch.get_rng_state(),
+                "pytorch": torch.get_rng_state(),
             },
             # "schedulers": [scheduler.state_dict() for scheduler in schedulers]
         }
-        if is_best_model:
-            path = os.path.join(model_config.save_dir,
-                                "best_model_epoch_{}.tar".format(
-                                    epoch))
-            state["metadata"]["is_best_model"] = True
-        else:
-            path = os.path.join(model_config.save_dir,
-                                "current_model_epoch_{}.tar".format(
-                                    epoch)
-                                )
-        torch.save(state, path)
-        write_message_logs("saved model to path = {}".format(path))
-
-    def load(self, epoch):
-        """Public method to load the model"""
-        return self._load_model(
-            index=epoch, should_load_optimizers=False, optimizers=None, schedulers=None
+        
+        path = os.path.join(
+            model_config.save_dir, "experiment_epoch_{}.tar".format(epoch)
         )
 
-    def _load_model(self, index=0, should_load_optimizers=False,
-                   optimizers=None, schedulers=None):
-        """Method to load the model"""
+        if is_best_model:
+            state["metadata"]["is_best_model"] = True
+        else:
+        torch.save(state, path)
+        write_message_logs("saved experiment to path = {}".format(path))
+
+    def load(
+        self,
+        epoch: int,
+        should_load_optimizers: bool = True,
+        optimizers=Optional[List[optim.Optimizer]],
+        schedulers=Optional[List[optim.lr_scheduler.ReduceLROnPlateau]],
+    ) -> None:
+        """Public method to load the model"""
+        
+
         model_config = self.config.model
         load_path = model_config.load_path
-        if load_path[-1] == "/":
+        if load_path == "":
+            # We are resuming an experiment
+            load_path = "{}/experiment_epoch_{}.tar".format(
+                self.config.general.id, epoch
+            )
+        elif load_path[-1] == "/":
             load_path = load_path[:-1]
         path = "{}/{}_agent_id_{}.tar".format(load_path,
                                               self.config.general.experiment_id,
@@ -91,7 +110,6 @@ class BaseModel(nn.Module, Checkpointable):
             checkpoint = torch.load(path)
         else:
             checkpoint = torch.load(path, map_location=lambda storage, loc: storage)
-        epochs = checkpoint["metadata"]["epoch"]
         load_random_state(checkpoint["random_state"])
         self._load_model_params(checkpoint["model"]["state_dict"])
 
@@ -102,10 +120,13 @@ class BaseModel(nn.Module, Checkpointable):
                 optimizer.load_state_dict(
                     checkpoint["optimizers"][optim_index]["state_dict"]
                 )
-            # for scheduler_index, scheduler in enumerate(schedulers):
-            # optimizer.load_state_dict(checkpoint[OPTIMIZERS][optim_index]())
-            # scheduler.load_state_dict(checkpoint["schedulers"][scheduler_index])
-        return optimizers, schedulers, epochs
+            key = "schedulers"
+            if key in checkpoint:
+                for scheduler_index, scheduler in enumerate(schedulers):
+                    scheduler.load_state_dict(
+                        checkpoint[key][scheduler_index]["state_dict"]
+                    )
+        return optimizers, schedulers
 
     def _load_model_params(self, state_dict):
         """Method to load the model params"""
