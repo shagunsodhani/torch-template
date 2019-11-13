@@ -1,19 +1,18 @@
 """Class to run the experiments"""
 # from time import time
 
-import torch
 import os
+from typing import Iterable, Optional
 
-from codes.utils.checkpointable import Checkpointable
-from typing import Optional, Iterable
-
+import torch
 from codes.experiment import metric
 from codes.logbook.logbook import LogBook
+from codes.utils.checkpointable import Checkpointable
 from codes.utils.util import get_cpu_stats
 
 
-class CheckpointableExperiment(Checkpointable):
-    """Checkpointable Experiment Class"""
+class Experiment(Checkpointable):
+    """Experiment Class"""
 
     def __init__(self, config, model):
         self.config = config

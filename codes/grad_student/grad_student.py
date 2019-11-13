@@ -9,9 +9,6 @@ from tqdm import tqdm
 
 import torch
 import torch.multiprocessing as mp
-from codes.experiment import signature_experiment as sig_exp
-from codes.experiment.checkpointable_experiment import \
-    prepare_and_run_experiment as exp
 from codes.logbook.filesystem_logger import (write_config_log,
                                              write_message_logs)
 from codes.logbook.logbook import LogBook
@@ -19,6 +16,7 @@ from codes.utils.checkpointable import Checkpointable
 from codes.utils.config import get_config
 from codes.utils.data import DataUtility
 from codes.utils.util import _import_module, set_seed
+from codes.experiment.experiment import prepare_and_run_experiment
 
 
 class GradStudent(Checkpointable):
