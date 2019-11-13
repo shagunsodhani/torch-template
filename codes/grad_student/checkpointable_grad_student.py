@@ -52,17 +52,15 @@ class CheckpointableGradStudent(Checkpointable):
             processes = []
             for experiment_id in range(self.num_experiments):
                 config = get_config(self.config.general.id, experiment_id=experiment_id)
-                proc = mp.Process(target=prepare_and_run_experiment,
-                                  args=(config,
-                                        self.model))
+                proc = mp.Process(
+                    target=prepare_and_run_experiment, args=(config, self.model)
+                )
                 proc.start()
                 processes.append(proc)
             for proc in processes:
                 proc.join()
         else:
-            prepare_and_run_experiment(config=self.config,
-                                       model=self.model)
-
+            prepare_and_run_experiment(config=self.config, model=self.model)
 
     def save(self, epoch: Optional[int] = None) -> None:
         state = {"config": self.config}
@@ -74,13 +72,15 @@ class CheckpointableGradStudent(Checkpointable):
     def load(self, epoch: Optional[int] = None) -> None:
         self.experiment.load(epoch=epoch)
 
+
 def bootstrap_config(config_id):
     """Method to generate the config (using config id) and set seeds"""
     config = get_config(config_id, experiment_id=0)
     print(config)
     set_logger(config)
-    write_message_logs("Starting Experiment at {}".
-                       format(time.asctime(time.localtime(time.time()))))
+    write_message_logs(
+        "Starting Experiment at {}".format(time.asctime(time.localtime(time.time())))
+    )
     write_message_logs("torch version = {}".format(torch.__version__))
     write_config_log(config)
     set_seed(seed=config.general.seed)

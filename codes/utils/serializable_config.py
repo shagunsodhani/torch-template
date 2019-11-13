@@ -5,8 +5,7 @@ from box import Box, _to_json
 class SerializableConfig(Box):
     """serializable box"""
 
-    def to_json(self, filename=None,
-                encoding="utf-8", errors="strict", **json_kwargs):
+    def to_json(self, filename=None, encoding="utf-8", errors="strict", **json_kwargs):
         """
         Transform the Box object into a JSON string.
 
@@ -18,13 +17,14 @@ class SerializableConfig(Box):
         """
         _dict = self.to_serializable_dict()
 
-        return _to_json(_dict, filename=filename,
-                        encoding=encoding, errors=errors, **json_kwargs)
+        return _to_json(
+            _dict, filename=filename, encoding=encoding, errors=errors, **json_kwargs
+        )
 
     def to_serializable_dict(self):
         """Method to serialize the config object as a dictionary"""
         _dict = self.to_dict()
-        _dict['general']['device'] = _dict['general']['device'].type
+        _dict["general"]["device"] = _dict["general"]["device"].type
         # for key in ["observation_space", "action_space"]:
         #     if key in _dict["env"]:
         #     _dict["env"][key] = str(_dict['env'][key])
@@ -35,10 +35,7 @@ class SerializableConfig(Box):
 def _get_config_box(_dict, frozen_box=False):
     """Wrapper to get a box"""
     return SerializableConfig(
-        _dict,
-        default_box_attr=None,
-        box_duplicates="ignore",
-        frozen_box=frozen_box
+        _dict, default_box_attr=None, box_duplicates="ignore", frozen_box=frozen_box
     )
 
 

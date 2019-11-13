@@ -6,13 +6,17 @@ import torch
 import torch.multiprocessing as mp
 
 from codes.experiment.experiment import prepare_and_run_experiment
-from codes.logbook.filesystem_logger import set_logger, write_message_logs, write_config_log
+from codes.logbook.filesystem_logger import (
+    set_logger,
+    write_message_logs,
+    write_config_log,
+)
 from codes.model.base_model import BaseModel
 from codes.utils.config import get_config
 from codes.utils.util import set_seed
 
 
-class GradStudent():
+class GradStudent:
     """GradStudent Class
 
     In practice, it is a thin class to support multiple experiments at once."""
@@ -42,16 +46,15 @@ class GradStudent():
             processes = []
             for experiment_id in range(self.num_experiments):
                 config = get_config(self.config.general.id, experiment_id=experiment_id)
-                proc = mp.Process(target=prepare_and_run_experiment,
-                                  args=(config,
-                                        self.model))
+                proc = mp.Process(
+                    target=prepare_and_run_experiment, args=(config, self.model)
+                )
                 proc.start()
                 processes.append(proc)
             for proc in processes:
                 proc.join()
         else:
-            prepare_and_run_experiment(config=self.config,
-                                       model=self.model)
+            prepare_and_run_experiment(config=self.config, model=self.model)
 
 
 def bootstrap_config(config_id):
@@ -59,8 +62,9 @@ def bootstrap_config(config_id):
     config = get_config(config_id, experiment_id=0)
     print(config)
     set_logger(config)
-    write_message_logs("Starting Experiment at {}".
-                       format(time.asctime(time.localtime(time.time()))))
+    write_message_logs(
+        "Starting Experiment at {}".format(time.asctime(time.localtime(time.time())))
+    )
     write_message_logs("torch version = {}".format(torch.__version__))
     write_config_log(config)
     set_seed(seed=config.general.seed)

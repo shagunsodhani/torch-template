@@ -8,10 +8,7 @@ def get_default_metric_dict(mode, level="individual"):
     """Method to return a defualt metric dict"""
     _, keys_to_add, keys_to_replace = _get_metric_keys()
 
-    metric_dict = {
-        "mode": mode,
-        "level": level,
-    }
+    metric_dict = {"mode": mode, "level": level}
 
     if level == "individual":
         default = -1.0
@@ -44,14 +41,10 @@ def prepare_metric_dict_to_log(current_metric_dict):
 
 def _get_metric_keys():
     """Method to obtain the different metric keys."""
-    keys_to_replace = ["minibatch_idx",
-                       "epoch_idx"]
+    keys_to_replace = ["minibatch_idx", "epoch_idx"]
 
     # All these keys should start with "total".
-    keys_to_add = ["total_num",
-                   "total_time",
-                   "total_correct",
-                   "total_loss"]
+    keys_to_add = ["total_num", "total_time", "total_correct", "total_loss"]
 
     keys_to_remain_fixed = ["mode", "level"]
 
@@ -59,7 +52,8 @@ def _get_metric_keys():
 
 
 def merge_individual_metrics_into_aggregate_metrics(
-        individual_metrics, aggregated_metrics):
+    individual_metrics, aggregated_metrics
+):
     """Method to merge the individual metric dict into aggregate metric dict"""
 
     _, keys_to_add, keys_to_replace = _get_metric_keys()

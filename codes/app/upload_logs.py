@@ -56,9 +56,12 @@ def upload_logs(log_file_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Optional app description')  # pylint: disable=invalid-name
-    parser.add_argument('config_id', type=str,
-                        help='A required integer positional argument')  # pylint: disable=invalid-name
+    parser = argparse.ArgumentParser(
+        description="Optional app description"
+    )  # pylint: disable=invalid-name
+    parser.add_argument(
+        "config_id", type=str, help="A required integer positional argument"
+    )  # pylint: disable=invalid-name
 
     args = parser.parse_args()  # pylint: disable=invalid-name
 
