@@ -14,6 +14,4 @@ def run(config_id):
 
 
 if __name__ == "__main__":
-    run(
-        config_id=argument_parser()
-    )
+    run(config_id=argument_parser())

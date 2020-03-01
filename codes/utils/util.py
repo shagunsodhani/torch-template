@@ -20,7 +20,7 @@ import torch
 from box import Box
 
 
-def flatten_dict(d, parent_key='', sep='#'):
+def flatten_dict(d, parent_key="", sep="#"):
     """Method to flatten a given dict using the given seperator.
     Taken from https://stackoverflow.com/a/6027615/1353861
     """
@@ -60,12 +60,12 @@ def padarray(A, size, const=1):
     """Taken from
     https://stackoverflow.com/questions/38191855/zero-pad-numpy-array/38192105"""
     t = size - len(A)
-    return np.pad(A, pad_width=(0, t), mode='constant', constant_values=const)
+    return np.pad(A, pad_width=(0, t), mode="constant", constant_values=const)
 
 
 def parse_file(file_name):
     """Method to read the given input file and return an iterable for the lines"""
-    with open(file_name, encoding='utf-8') as f:
+    with open(file_name, encoding="utf-8") as f:
         for line in f:
             yield line
 
@@ -84,7 +84,7 @@ def chunks(l, n):
     https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
     Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
-        yield l[i:i + n]
+        yield l[i : i + n]
 
 
 def reverse_dict(_dict):
@@ -118,7 +118,7 @@ def set_seed(seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
 
 
 def timing(f):
@@ -157,7 +157,8 @@ def log_pdf(x, mu, std):
     Taken from: https://chrisorm.github.io/VI-MC-PYT.html"""
 
     return -0.5 * torch.log(2 * np.pi * std ** 2) - (
-            0.5 * (1 / (std ** 2)) * (x - mu) ** 2)  # pylint: disable=no-member
+        0.5 * (1 / (std ** 2)) * (x - mu) ** 2
+    )  # pylint: disable=no-member
 
 
 def running_mean(x, N):
@@ -197,10 +198,7 @@ def unmerge_second_and_third_dim(batch, second_dim=-1, third_dim=-1):
 def _get_box(_dict, frozen_box=False):
     """Wrapper to get a box"""
     return Box(
-        _dict,
-        default_box_attr=None,
-        box_duplicates="ignore",
-        frozen_box=frozen_box
+        _dict, default_box_attr=None, box_duplicates="ignore", frozen_box=frozen_box
     )
 
 
@@ -222,8 +220,7 @@ def merge_nested_dicts(dict1, dict2):
     flattened_dict1 = flatten_dict(dict1, sep=sep)
     flattened_dict2 = flatten_dict(dict2, sep=sep)
     flattened_merged_dict = {**flattened_dict1, **flattened_dict2}
-    return unflatten_dict(flattened_merged_dict,
-                          sep=sep)
+    return unflatten_dict(flattened_merged_dict, sep=sep)
 
 
 def map_observation_space_to_shape(obs):
@@ -240,7 +237,7 @@ def split_on_caps(input_str):
     """Method to split a given string at uppercase characters.
     Taken from: https://stackoverflow.com/questions/2277352/split-a-string-at-uppercase-letters
     """
-    return re.findall('[A-Z][^A-Z]*', input_str)
+    return re.findall("[A-Z][^A-Z]*", input_str)
 
 
 def print_mem_report():
@@ -257,10 +254,8 @@ def get_cpu_stats():
     virtual_memory = psutil.virtual_memory()
     pid = os.getpid()
     py = psutil.Process(pid)
-    memory_use = py.memory_info()[0] / (2. ** 30)  # memory use in GB...I think
+    memory_use = py.memory_info()[0] / (2.0 ** 30)  # memory use in GB...I think
     # print('memory GB:', memoryUse)
     return dict(
-        cpu_percent=cpu_percent,
-        virtual_memory=virtual_memory,
-        memory_use=memory_use
+        cpu_percent=cpu_percent, virtual_memory=virtual_memory, memory_use=memory_use
     )

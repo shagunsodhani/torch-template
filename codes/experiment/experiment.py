@@ -1,14 +1,17 @@
 """Class to run the experiments"""
 # from time import time
 
-import torch
+import os
+from typing import Iterable, Optional
 
+import torch
 from codes.experiment import metric
 from codes.logbook.logbook import LogBook
+from codes.utils.checkpointable import Checkpointable
 from codes.utils.util import get_cpu_stats
 
 
-class Experiment():
+class Experiment(Checkpointable):
     """Experiment Class"""
 
     def __init__(self, config, model):
@@ -18,7 +21,8 @@ class Experiment():
         self.device = self.config.general.device
         self.model = model
         self.logbook.watch_model(model=self.model)
-        self.optimizer = self.model.get_optimizers()[0]
+        self.optimizer, self.scheduler = self.get_scheduler_and_optimizer()
+        self.epoch = None
         self.logbook.watch_model(model=self.model)
         self._mode = None
         self.dataloaders = get_dataloaders(
@@ -32,6 +36,11 @@ class Experiment():
     def reset_experiment(self):
         """Reset the experiment"""
         self._mode = None
+        self.epoch = 0
+
+    def get_scheduler_and_optimizer(self):
+        optimizers, schedulers = self.model.get_optimizers_and_schedulers()
+        return optimizers[0], schedulers[0]
 
     def write_config_log(self, config):
         """Method to interface with the logbook"""
@@ -85,9 +94,6 @@ class Experiment():
         """Method to run the experiment"""
 
         # start_time = time()
-        num_uptates_to_do = -1
-
-        total_num_steps = 0
 
         compute_stats = {}
         mode = "train"
@@ -95,16 +101,18 @@ class Experiment():
 
         current_metric_dict = metric.get_default_metric_dict(mode=mode)
 
-        for epochs in range(num_uptates_to_do):
+        current_epoch = 0
+        epoch_to_start_from = self.epoch
 
-            if should_log_compute_stats:
+        for current_epoch in range(
+            epoch_to_start_from, self.config.model.num_epochs
+        ):
+           if should_log_compute_stats:
                 compute_stats["start_stats"] = get_cpu_stats()
+            self.epoch = current_epoch
+            self.periodic_save(epoch=current_epoch)
 
-            self.save(epochs=epochs)
-
-            # end_time = time()
-
-            if epochs % self.config.cometml.frequency == 0:
+            if self.epoch % self.config.cometml.frequency == 0:
                 self.write_metric_logs(**(
                     metric.prepare_metric_dict_to_log(current_metric_dict,
                                                       num_updates=self.config.cometml.frequency)))  # pylint: disable=E1121
@@ -115,11 +123,11 @@ class Experiment():
 
             evaluate_frequency = self.config.model.evaluate_frequency
             if (evaluate_frequency > 0
-                    and epochs % evaluate_frequency == 0):
+                    and self.epoch % evaluate_frequency == 0):
                 with torch.no_grad():
                     self.set_eval_mode()
                     self.evaluate(num_training_steps_so_far=total_num_steps,
-                                  num_training_epochs_so_far=epochs)
+                                  num_training_epochs_so_far=self.epoch)
                     self.set_train_mode()
 
             if should_log_compute_stats:
@@ -157,16 +165,46 @@ class Experiment():
     #         file_name=None,
     #     ))
 
-    def save(self, epochs):
+    def save(self, epoch: Optional[int]) -> None:
         """Method to save the experiment"""
-        if self.config.model.persist_frquency > 0 \
-                and epochs % self.config.model.persist_frquency == 0:
-            self.model.save(epoch=epochs,
-                            optimizer=self.optimizer,
-                            is_best_model=False)
+        if epoch is None:
+            epoch = self.epoch
+        self.model.save(epoch, optimizers=[self.optimizer])
+
+    def load(self, epoch: Optional[int]) -> None:
+        """Method to load the entire experiment"""
+        if epoch is None:
+            path_to_load_epoch_state = os.path.join(
+                self.config.model.save_dir, "epoch.tar"
+            )
+            epoch_state = torch.load(path_to_load_epoch_state)
+            epoch = epoch_state["current"]
+        self.epoch = epoch
+        self._load_model()
+
+    def _load_model(self) -> None:
+        """Internal method to load the model (only)"""
+        optimizers, schedulers = self.model.load(
+            epoch=self.epoch, optimizers=[self.optimizer], schedulers=[self.scheduler]
+        )
+        self.optimizer = optimizers[0]
+        self.scheduler = schedulers[0]
+
+    def periodic_save(self, epoch):
+        """Method to perioridically save the experiment.
+        This method is a utility method, built on top of save method.
+        It performs an extra check of wether the experiment is configured to
+        be saved during the current epoch."""
+        if (
+            self.config.model.persist_frquency > 0
+            and epochs % self.config.model.persist_frquency == 0
+            and epoch % self.config.model.persist_frquency == 0
+        ):
+            self.model.save_model(epochs)
+            self.save(epoch)
 
 
 def prepare_and_run_experiment(config, model):
     """Primary method to interact with the Experiments"""
-    experiment = Experiment(config, model)
+    experiment = CheckpointableExperiment(config, model)
     experiment.run()

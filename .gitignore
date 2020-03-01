@@ -113,4 +113,7 @@ plots/*
 
 **.TXT
 
-shagun/.idea/
+# logs/
+logs/
+models/
+.vscode

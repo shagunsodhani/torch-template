@@ -21,7 +21,7 @@ def write_log(log):
 
 def add_time_to_log(log):
     """Method to add the timestamp key to the log dict"""
-    log["timestamp"] = time.strftime('%I:%M%p %Z %b %d, %Y')
+    log["timestamp"] = time.strftime("%I:%M%p %Z %b %d, %Y")
     return log
 
 
@@ -55,44 +55,36 @@ def write_message_logs(message, experiment_id=0):
     """"Write message logs.
     experiment_id flag is useful when using multi-processing"""
     kwargs = {"messgae": message, "experiment_id": experiment_id}
-    log, _ = format_custom_logs(keys=[],
-                                raw_log=kwargs,
-                                log_type="print")
+    log, _ = format_custom_logs(keys=[], raw_log=kwargs, log_type="print")
     write_log(log)
 
 
 def write_trajectory_logs(trajectory, experiment_id=0):
     """"Write trajectory logs"""
     kwargs = {"message": trajectory, "experiment_id": experiment_id}
-    log, _ = format_custom_logs(keys=[],
-                                raw_log=kwargs,
-                                log_type="trajectory")
+    log, _ = format_custom_logs(keys=[], raw_log=kwargs, log_type="trajectory")
     write_log(log)
 
 
 def write_config_log(config):
     """Write config logs"""
     config_to_write = json.loads(config.to_json())
-    log, _ = format_custom_logs(keys=[],
-                                raw_log=config_to_write,
-                                log_type="config")
+    log, _ = format_custom_logs(keys=[], raw_log=config_to_write, log_type="config")
     write_log(log)
 
 
 def write_metric_logs(metric):
     """Write metric logs"""
     keys = []
-    log, _ = format_custom_logs(keys=keys,
-                                raw_log=flatten_dict(metric),
-                                log_type="metric")
+    log, _ = format_custom_logs(
+        keys=keys, raw_log=flatten_dict(metric), log_type="metric"
+    )
     write_log(log)
 
 
 def write_metadata_logs(metadata):
     """Write metadata logs"""
-    log, _ = format_custom_logs(keys=[],
-                                raw_log=metadata,
-                                log_type="metadata")
+    log, _ = format_custom_logs(keys=[], raw_log=metadata, log_type="metadata")
     write_log(log)
 
 
@@ -113,7 +105,7 @@ def set_logger(config):
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.INFO)
     # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(message)s')
+    formatter = logging.Formatter("%(message)s")
     file_handler.setFormatter(formatter)
     stream_handler.setFormatter(formatter)
     # add the handlers to the logger

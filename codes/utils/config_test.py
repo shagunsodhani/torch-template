@@ -2,7 +2,11 @@
 
 import torch
 
-from codes.logbook.filesystem_logger import set_logger, write_message_logs, write_config_log
+from codes.logbook.filesystem_logger import (
+    set_logger,
+    write_message_logs,
+    write_config_log,
+)
 from codes.utils.config import get_config
 
 
