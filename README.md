@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/shagunsodhani/torch-template.svg?style=svg)](https://circleci.com/gh/shagunsodhani/torch-template) ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
 # torch-template
 Boiler plate code for Torch based ML projects
 
