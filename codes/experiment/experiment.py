@@ -143,7 +143,6 @@ class Experiment(Checkpointable):
         for batch_idx, batch in enumerate(trainloader):
             current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
             metric_dict.update(metrics_dict=current_metric)
-            break
         self.logbook.write_metric_log(
             metric=prepare_metric_dict_for_tb(metric_dict.to_dict())
         )
@@ -158,7 +157,6 @@ class Experiment(Checkpointable):
             with torch.no_grad():
                 current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
             metric_dict.update(metrics_dict=current_metric)
-            break
         self.global_metrics.update(metrics_dict=metric_dict)
         for metric_to_write in [metric_dict, self.global_metrics]:
             self.logbook.write_metric_log(
