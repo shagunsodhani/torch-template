@@ -1,220 +1,185 @@
 """Base class for all the models (with batteries)"""
-import importlib
 import os
 import random
+from copy import deepcopy
+from typing import Any, Dict, List, Optional, Tuple
 
-from typing import List, Optional
 import numpy as np
 import torch
-from torch import nn, optim
+from torch import nn
 
-from codes.logbook.filesystem_logger import write_message_logs
+from codes.model.types import OptimizerType, SchedulerType
+from codes.model.utils import OptimizerSchedulerTuple
+from codes.utils import utils
 from codes.utils.checkpointable import Checkpointable
+from codes.utils.config import ConfigType
 
 
-class BaseModel(nn.Module, Checkpointable):
+class BaseModel(nn.Module, Checkpointable):  # type: ignore
     """Base class for all models"""
 
-    def __init__(self, config):
+    def __init__(self, config: ConfigType, device: torch.device):
         super().__init__()
         self.config = config
         self.name = "base_model"
-        self.description = "This is the base class for all the models. " \
-                           "All the other models should extend this class. " \
-                           "It is not to be used directly."
-        self.criteria = nn.MSELoss(reduction="mean")
+        self.description = (
+            "This is the base class for all the models. "
+            "All the other models should extend this class. "
+            "It is not to be used directly."
+        )
         self.epsilon = 1e-6
+        self.device = device
 
-    def loss(self, outputs, labels):
-        """Method to compute the loss"""
-        return self.criteria(outputs, labels)
-
-    def track_loss(self, outputs, labels):
-        """There are two different functions related to loss as we might be interested in
-         tracking one loss and optimising another"""
-        return self.loss(outputs, labels)
-
-    def save(
+    def save(  # type: ignore
         self,
         epoch: int,
-        optimizers: Optional[List[torch.optim.Optimizer]],
+        optimizer_scheduler_tuple: OptimizerSchedulerTuple,
         is_best_model: bool = False,
-    ) -> None:
+        path_to_save_to: str = "",
+    ) -> str:
         """Method to persist the model.
         Note this method is not well tested"""
-        model_config = self.config.model
+        utils.make_dir(path_to_save_to)
         # Updating the information about the epoch
         # Check if the epoch_state is already saved on the file system
-        epoch_state_path = os.path.join(model_config.save_dir, "epoch.tar")
+        epoch_state_path = os.path.join(path_to_save_to, "epoch.tar")
 
         if os.path.exists(epoch_state_path):
-            epoch_state = torch.load(epoch_state_path)
+            epoch_state = torch.load(epoch_state_path)  # type: ignore
         else:
-            epoch_state = {"best": epoch}
+            epoch_state = {}
         epoch_state["current"] = epoch
         if is_best_model:
             epoch_state["best"] = epoch
-        torch.save(epoch_state, epoch_state_path)
+        torch.save(epoch_state, epoch_state_path)  # type: ignore
 
         state = {
-            "metadata": {"epoch": epoch, "is_best_model": False,},
-            "model": {"state_dict": self.state_dict(),},
-        "optimizers": [{"state_dict": optimizer.state_dict()}
-                for optimizer in self.get_optimizers()],
+            "metadata": {"epoch": epoch, "is_best_model": is_best_model},
+            "model": {"state_dict": self.state_dict()},
+            "optimizer": {
+                "state_dict": optimizer_scheduler_tuple.optimizer.state_dict()
+            },
             "random_state": {
                 "np": np.random.get_state(),
                 "python": random.getstate(),
-                "pytorch": torch.get_rng_state(),
+                "pytorch": torch.get_rng_state(),  # type: ignore
             },
-            # "schedulers": [scheduler.state_dict() for scheduler in schedulers]
         }
-        
-        path = os.path.join(
-            model_config.save_dir, "experiment_epoch_{}.tar".format(epoch)
+        scheduler = optimizer_scheduler_tuple.scheduler
+
+        if scheduler:
+            state["scheduler"] = {"state_dict": scheduler.state_dict()}
+
+        path = self._get_path_to_save_model(
+            dir_to_save_experiment=path_to_save_to, epoch=epoch
         )
 
-        if is_best_model:
-            state["metadata"]["is_best_model"] = True
-        else:
-        torch.save(state, path)
-        write_message_logs("saved experiment to path = {}".format(path))
+        torch.save(state, path)  # type: ignore
+        return "Saved experiment to path = {}".format(path)
 
-    def load(
+    def _get_path_to_save_model(self, dir_to_save_experiment: str, epoch: int) -> str:
+        return os.path.join(dir_to_save_experiment, "epoch_{}.tar".format(epoch))
+
+    def load(  # type: ignore
         self,
         epoch: int,
-        should_load_optimizers: bool = True,
-        optimizers=Optional[List[optim.Optimizer]],
-        schedulers=Optional[List[optim.lr_scheduler.ReduceLROnPlateau]],
-    ) -> None:
+        optimizer_scheduler_tuple: OptimizerSchedulerTuple,
+        path_to_load_from: str,
+        should_load_optimizer: bool = True,
+    ) -> Tuple[OptimizerSchedulerTuple, str]:
         """Public method to load the model"""
-        
 
-        model_config = self.config.model
-        load_path = model_config.load_path
-        if load_path == "":
-            # We are resuming an experiment
-            load_path = "{}/experiment_epoch_{}.tar".format(
-                self.config.general.id, epoch
-            )
-        elif load_path[-1] == "/":
-            load_path = load_path[:-1]
-        path = "{}/{}_agent_id_{}.tar".format(load_path,
-                                              self.config.general.experiment_id,
-                                              index)
-        if not os.path.exists(path):
-            path = "{}/{}_agent_id_{}.tar".format(load_path,
-                                                  self.config.general.experiment_id,
-                                                  0)
-        write_message_logs("Loading model from path {}".format(path))
-        if str(self.config.general.device) == "cuda":
-            checkpoint = torch.load(path)
-        else:
-            checkpoint = torch.load(path, map_location=lambda storage, loc: storage)
+        checkpoint = torch.load(path_to_load_from)  # type: ignore
         load_random_state(checkpoint["random_state"])
         self._load_model_params(checkpoint["model"]["state_dict"])
 
-        if should_load_optimizers:
-            if optimizers is None:
-                optimizers = self.get_optimizers()
-            for optim_index, optimizer in enumerate(optimizers):
-                optimizer.load_state_dict(
-                    checkpoint["optimizers"][optim_index]["state_dict"]
-                )
-            key = "schedulers"
-            if key in checkpoint:
-                for scheduler_index, scheduler in enumerate(schedulers):
-                    scheduler.load_state_dict(
-                        checkpoint[key][scheduler_index]["state_dict"]
-                    )
-        return optimizers, schedulers
+        if should_load_optimizer:
+            optimizer = optimizer_scheduler_tuple.optimizer
+            optimizer.load_state_dict(checkpoint["optimizer"]["state_dict"])
 
-    def _load_model_params(self, state_dict):
+            key = "scheduler"
+            scheduler = None
+            if key in checkpoint:
+                scheduler = optimizer_scheduler_tuple.scheduler
+                if scheduler is not None:
+                    scheduler.load_state_dict(checkpoint[key]["state_dict"])
+        message = "Loading model from path {}".format(path_to_load_from)
+
+        return (
+            OptimizerSchedulerTuple(optimizer=optimizer, scheduler=scheduler),
+            message,
+        )
+
+    def _load_model_params(self, state_dict: Dict[str, Any]) -> Any:
         """Method to load the model params"""
         self.load_state_dict(state_dict)
 
-    def get_model_params(self):
+    def get_model_params(self) -> List[torch.nn.Parameter]:
         """Method to get the model params"""
         model_parameters = list(filter(lambda p: p.requires_grad, self.parameters()))
-        params = sum([np.prod(p.size()) for p in model_parameters])
-        write_message_logs("Total number of params = " + str(params))
+        # num_params = sum([torch.numel(p) for p in model_parameters])
+        # write_message("Total number of params = " + str(params))
         return model_parameters
 
-    def get_optimizers_and_schedulers(self):
-        """Method to return the list of optimizers and schedulers for the model"""
-        optimizers = self.get_optimizers()
-        if optimizers:
-            optimizers, schedulers = self._register_optimizers_to_schedulers(optimizers)
-            return optimizers, schedulers
-        return None
+    def get_optimizer_and_scheduler(self) -> OptimizerSchedulerTuple:
+        """Return a OptimizerSchedulerTuple for the model"""
+        optimizer = self.get_optimizer()
+        scheduler = self._register_optimizer_to_scheduler(optimizer)
+        return OptimizerSchedulerTuple(optimizer=optimizer, scheduler=scheduler)
 
-    def get_optimizers(self):
-        """Method to return the list of optimizers for the model"""
-        optimizers = []
+    def get_optimizer(self) -> OptimizerType:
+        """Return an optimizer for the model"""
         model_params = self.get_model_params()
-        if model_params:
-            optimizers.append(self._register_params_to_optimizer(model_params))
-            return optimizers
+        return self._register_params_to_optimizer(model_params)
+
+    def _register_params_to_optimizer(
+        self, model_params: List[torch.nn.Parameter]
+    ) -> OptimizerType:
+
+        optim_config = deepcopy(self.config.optim)
+        optim_cls = utils.load_callable(optim_config.pop("cls"))
+        optimizer = optim_cls(model_params, **optim_config)
+        assert isinstance(optimizer, OptimizerType)
+        return optimizer
+
+    def _register_optimizer_to_scheduler(
+        self, optimizer: OptimizerType
+    ) -> Optional[SchedulerType]:
+
+        scheduler_config = deepcopy(self.config.scheduler)
+        if scheduler_config:
+
+            scheduler_cls = utils.load_callable(scheduler_config.pop("cls"))
+
+            scheduler = scheduler_cls(optimizer=optimizer, **scheduler_config)
+            assert isinstance(scheduler, SchedulerType)
+
+            return scheduler
+
         return None
 
-    def _register_params_to_optimizer(self, model_params):
-        """Method to map params to an optimizer"""
-        optim_config = self.config.model.optim
-        optimizer_cls = getattr(importlib.import_module("torch.optim"), optim_config.name)
-        optim_name = optim_config.name.lower()
-        if optim_name == "adam":
-            return optimizer_cls(
-                model_params,
-                lr=optim_config.learning_rate,
-                weight_decay=optim_config.weight_decay,
-                eps=optim_config.eps
-            )
-        return optimizer_cls(
-            model_params,
-            lr=optim_config.learning_rate,
-            weight_decay=optim_config.weight_decay,
-            eps=optim_config.eps
-        )
+    def forward(self, data):  # type: ignore
+        # pylint: disable=W0221,W0613
+        """Forward pass of the network"""
+        raise NotImplementedError
 
-    def _register_optimizers_to_schedulers(self, optimizers):
-        """Method to map optimzers to schedulers"""
-        optimizer_config = self.config.model.optimizer
-        if optimizer_config.scheduler_type == "exp":
-            schedulers = list(map(lambda optimizer: optim.lr_scheduler.ExponentialLR(
-                optimizer=optimizer,
-                gamma=self.config.model.optimizer.scheduler_gamma),
-                                  optimizers))
-        elif optimizer_config.scheduler_type == "plateau":
-            schedulers = list(map(lambda optimizer: optim.lr_scheduler.ReduceLROnPlateau(
-                optimizer=optimizer,
-                mode="min",
-                patience=self.config.model.optimizer.scheduler_patience,
-                factor=self.config.model.optimizer.scheduler_gamma,
-                verbose=True),
-                                  optimizers))
-
-        return optimizers, schedulers
-
-    def forward(self, data):  # pylint: disable=W0221,W0613
-        '''Forward pass of the network'''
-        return None
-
-    def get_param_count(self):
+    def get_param_count(self) -> int:
         """Count the number of params"""
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
-        return sum([np.prod(p.size()) for p in model_parameters])
+        return sum((np.prod(p.size()) for p in model_parameters))
 
-    def freeze_weights(self):
+    def freeze_weights(self) -> None:
         """Freeze the model"""
         for param in self.parameters():
             param.requires_grad = False
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string description of the model"""
         return self.description
 
 
-def load_random_state(random_state):
+def load_random_state(random_state: Dict[str, Any]) -> None:
     """Method to load the random state"""
     np.random.set_state(random_state["np"])
     random.setstate(random_state["python"])
-    torch.set_rng_state(random_state["pytorch"])
+    torch.set_rng_state(random_state["pytorch"])  # type: ignore
