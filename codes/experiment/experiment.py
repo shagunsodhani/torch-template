@@ -123,8 +123,8 @@ class Experiment(Checkpointable):
         This method is a utility method, built on top of save method.
         It performs an extra check of wether the experiment is configured to
         be saved during the current epoch."""
-        persist_frquency = self.config.experiment.persist_frquency
-        if persist_frquency > 0 and epoch % persist_frquency == 0:
+        persist_frequency = self.config.experiment.persist_frequency
+        if persist_frequency > 0 and epoch % persist_frequency == 0:
             self.save(epoch)
 
     def run(self) -> None:
