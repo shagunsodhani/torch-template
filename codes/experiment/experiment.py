@@ -129,12 +129,14 @@ class Experiment(Checkpointable):
 
     def run(self) -> None:
         start_epoch = 0
-        self.save(epoch=0)
-        for epoch in range(start_epoch, start_epoch + 200):
+        for epoch in range(
+            start_epoch, start_epoch + self.config.experiment.num_epochs
+        ):
             self.train(epoch)
             self.test(epoch)
             if self.scheduler:
                 self.scheduler.step()  # type: ignore
+        self.periodic_save(epoch)
 
     def train(self, epoch: int) -> None:
         epoch_start_time = time()
