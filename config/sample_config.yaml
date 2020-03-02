@@ -1,61 +1,45 @@
-{
-    "general": {
-        "seed": 42,
-        "base_path": "",
-        "device": "cpu",
-        "id": "sample_config",
-        "description": "Sample Configuration",
-        "server": "cluster",
-        # Note that this parameter is being ignore for now.
-        "commit_id": "",
-        "date": "",
-        "num_experiments":1,
-        "slurm_id": "-1",
-    },
-    "logger":{
-        "remote":{
-         "api_key": "",
-         "entity": "shagun",
-         "project_name": "",
-         "should_use": True,
-         "frequency": 100,
-        },
-        "file":{
-            "path": "",
-            "should_log_trajectory": False,
-            "should_log_compute_stats": False,
-            },
-        "tensorboard":{
-            "should_use": False,
-            },
-     },
-    "model": {
-        "should_train": True,
-        "num_epochs": 100000,
-        "persist_frquency": -1,
-      # In terms of number of updates
-        "evaluate_frequency": -1,
-      # In terms of number of updates
-        "persist_best_model": False,
-        "early_stopping_patience": 150,
-        "use_sparse_embedding": False,
-        "save_dir": "",
-        "load_path": "7/best_model.tar",
-      # the loadpath would look something like this 2/model_epoch_101_timestamp_1534428832.tar
-        "should_load_model": false,
-        "modes": ["train", "val", "test"],
-      # Modes to perform during experiment. Supported values "train", "val", "test"
-        "master":{
-            "num_workers": 2,
-        },
-        "optim":{
-            "name": "Adam",
-            "learning_rate": 0.001,
-            "weight_decay": 0.0,
-            "eps": 1e-08
-        }
-    },
-    "plot": {
-        "base_path": ""
-    },
-}
+general:
+  seed: 42
+  base_path: /private/home/${env:USER}/projects/torch-template
+  device: cuda:0
+  id: sample_config
+  description: Sample Config
+  tags:
+    - sample
+  commit_id:
+  date:
+  slurm_id:
+
+logbook:
+  dir: ${general.base_path}/logs/${general.id}
+  logger_file_path: ${logbook.dir}/log.jsonl
+  tensorboard:
+    logdir: ${logbook.dir}/tb
+
+experiment:
+  num_epochs: 100
+  persist_frequency: -1 # If persist frequency < 0, the model is not persisted
+  persist_best_model: False
+  early_stopping_patience: 100
+  save_dir: ${general.base_path}/models/${general.id}
+  load_path: ${general.base_path}/models/7/best_model.tar"
+  should_load_model: false
+  modes:
+    train:
+      frequency: 1
+    validation:
+      frequency: 1
+
+dataset:
+  _load: dataset/cifar10
+
+model:
+  cls: codes.model.${dataset.name}_resnet.ResNet18
+
+optim:
+  # cls should be the Optimizer class
+  # Other key-word arguments are passed to the optimizer constructor
+  cls: torch.optim.Adam
+  lr: 0.001
+
+scheduler:

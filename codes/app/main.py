@@ -1,16 +1,15 @@
 """This is the main entry point for the code"""
 
-from codes.grad_student.grad_student import GradStudent
+from codes.app import utils
+from codes.experiment import utils as experiment_utils
 from codes.utils.argument_parser import argument_parser
-from codes.utils.util import timing
 
 
-@timing
-def run(config_id):
+def run(config_id: str) -> None:
     """Run the code"""
 
-    grad_student = GradStudent(config_id)
-    grad_student.run()
+    config = utils.bootstrap_config(config_id)
+    experiment_utils.prepare_and_run(config=config)
 
 
 if __name__ == "__main__":

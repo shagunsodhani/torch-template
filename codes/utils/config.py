@@ -1,95 +1,194 @@
-"""Code to read and process the config"""
+"""Code to interface with the config"""
 import datetime
 import os
+from copy import deepcopy
+from pathlib import Path
+from typing import Any, Dict, Union, cast
 
-import torch
-import yaml
+from omegaconf import DictConfig, OmegaConf
 
-from codes.utils.serializable_config import get_config_box, get_forzen_config_box
-from codes.utils.util import make_dir, get_current_commit_id, merge_nested_dicts
+from codes.utils import utils
+
+ConfigType = Union[DictConfig]
 
 
-def read_config_file(config_id="config"):
-    """Method to read a config file"""
-    path = os.path.dirname(os.path.realpath(__file__)).split("/codes")[0]
+def make_config_mutable(config: ConfigType) -> ConfigType:
+    """Set the config to be mutable
+
+    Args:
+        config (ConfigType):
+
+    Returns:
+        ConfigType:
+    """
+    OmegaConf.set_readonly(config, False)
+    return config
+
+
+def make_config_immutable(config: ConfigType) -> ConfigType:
+    """Set the config to be immutable
+
+    Args:
+        config (ConfigType):
+
+    Returns:
+        ConfigType:
+    """
+    OmegaConf.set_readonly(config, True)
+    return config
+
+
+def to_dict(config: ConfigType) -> Dict[str, Any]:
+    """Convert config to serializable dictionary
+
+    Args:
+        config (ConfigType):
+
+    Returns:
+        Dict:
+    """
+    dict_config = cast(Dict[str, Any], OmegaConf.to_container(config))
+    return dict_config
+
+
+def _read_config_file_and_load_components(config_id: str = "config") -> ConfigType:
+    """Read a config file
+
+    Args:
+        config_id (str, optional): Id of the config file to read.
+            Defaults to "config".
+
+    Returns:
+        ConfigType: Config object
+    """
+
+    config = read_config_file(config_id=config_id)
+    for key in config:
+        config[key] = _load_components(config[key])
+    return config
+
+
+def read_config_file(config_id: str = "sample_config") -> ConfigType:
+    """Read a config file
+
+    Args:
+        config_id (str, optional): Id of the config file to read.
+            Defaults to "sample_config".
+
+    Returns:
+        ConfigType: Config object
+    """
+
+    project_root = str(Path(__file__).resolve()).split("/codes")[0]
     config_name = "{}.yaml".format(config_id)
-    return yaml.safe_load(open(os.path.join(path, "config", config_name)))
+    config = OmegaConf.load(os.path.join(project_root, "config", config_name))
+    assert isinstance(config, DictConfig)
+    return config
 
 
-def get_config(config_id=None, should_make_dir=True, experiment_id=0):
-    """Method to prepare the config for all downstream tasks"""
+def get_config(
+    config_id: str,
+    should_make_dir: bool = True,
+    should_make_config_immutable: bool = True,
+) -> ConfigType:
+    """Prepare the config for all downstream tasks
 
-    sample_config = read_config_file("sample_config")
-    actual_config = read_config_file(config_id)
-    merged_config = merge_nested_dicts(sample_config, actual_config)
-    boxed_config = get_config_box(merged_config)
-    config = _post_process(boxed_config, should_make_dir, experiment_id)
-    if _is_valid_config(config, config_id):
-        return config
-    return None
+    Args:
+        config_id (str): Id of the config file to read.
+        should_make_dir (bool, optional): Should make dir (for saving
+            models, logs etc). Defaults to True.
+        should_make_config_immutable (bool, optional): Should the config be frozen (immutable).
+             Defaults to True.
 
-
-def get_config_from_log(log):
-    """Method to prepare the config for all downstream tasks"""
-    boxed_config = get_config_box(log)
-    boxed_config.general.base_path = os.path.dirname(os.path.realpath(__file__)).split(
-        "/codes"
-    )[0]
-
-    boxed_config.logger.file.path = os.path.join(
-        boxed_config.general.base_path, "logs", boxed_config.general.id
-    )
-    make_dir(path=boxed_config.logger.file.path)
-    make_dir(os.path.join(boxed_config.logger.file.path, "train"))
-    make_dir(os.path.join(boxed_config.logger.file.path, "eval"))
-    boxed_config.logger.file.path = os.path.join(
-        boxed_config.logger.file.path, "log.txt"
-    )
-    boxed_config.logger.file.dir = boxed_config.logger.file.path.rsplit("/", 1)[0]
-
-    return boxed_config
+    Returns:
+        ConfigType: [description]
+    """
+    sample_config = _read_config_file_and_load_components("sample_config")
+    current_config = _read_config_file_and_load_components(config_id)
+    config = OmegaConf.merge(sample_config, current_config)
+    OmegaConf.set_struct(config, True)
+    resolved_config = OmegaConf.create(OmegaConf.to_container(config, resolve=True))
+    assert isinstance(resolved_config, DictConfig)
+    config = _process(config=resolved_config, should_make_dir=should_make_dir)
+    if should_make_config_immutable:
+        config = make_config_immutable(config)
+    assert _is_valid_config(config, config_id)
+    return config
 
 
-def _is_valid_config(config, config_id):
-    """Simple tests to check the validity of a given config file"""
-    if config.general.id == config_id:
+def _load_components(config: ConfigType) -> ConfigType:
+    """Load the different componenets in a config
+
+    Args:
+        config (ConfigType)
+
+    Returns:
+        ConfigType
+    """
+    special_key = "_load"
+    if config is not None and special_key in config:
+        loaded_config = read_config_file(config.pop(special_key))
+        updated_config = OmegaConf.merge(loaded_config, config)
+        assert isinstance(updated_config, ConfigType)
+        return updated_config
+    return config
+
+
+def _is_valid_config(config: ConfigType, config_id: str) -> bool:
+    """Check if a config is valid
+
+    Args:
+        config (ConfigType): Config object
+        config_id (str): Config id to verify the config object
+
+    Returns:
+        bool: Is the config object valid
+    """
+    if config.general.id == config_id.replace("/", "_"):
         return True
-    print("Error in Config. Config Id and Config Names do not match")
+
+    utils.write_debug_message(
+        message="Error in Config. Config Id and Config Names do not match"
+    )
     return False
 
 
-def _post_process(config, should_make_dir, experiment_id=0):
-    """Post Processing on the config"""
+def _process(config: ConfigType, should_make_dir: bool) -> ConfigType:
+    """Process the config
 
-    config.general = _post_process_general_config(config.general, experiment_id)
-    config.model = _post_process_model_config(config.model, config, should_make_dir)
-    config.logger = _post_process_logger_config(
-        config.logger, config.general, should_make_dir
-    )
-    config.plot = _post_process_plot_config(
-        config.plot, config.general, should_make_dir
-    )
-    return get_forzen_config_box(config.to_dict())
+    Args:
+        config (ConfigType): Config object
+        should_make_dir (bool): Should make dir for saving logs, models etc
+
+    Returns:
+        [ConfigType]: Processed config
+    """
+
+    config = _process_general_config(config=config)
+    config = _process_logbook_config(config=config, should_make_dir=should_make_dir)
+    config = _process_experiment_config(config=config, should_make_dir=should_make_dir)
+    return config
 
 
-def _post_process_general_config(general_config, experiment_id=0):
-    """Method to post process the general section of the config"""
+def _process_general_config(config: ConfigType) -> ConfigType:
+    """Process the `general` section of the config
 
-    if not general_config.base_path:
-        general_config.base_path = os.path.dirname(os.path.realpath(__file__)).split(
-            "/codes"
-        )[0]
+    Args:
+        config (ConfigType): Config object
+
+    Returns:
+        [ConfigType]: Processed config
+    """
+
+    general_config = deepcopy(config.general)
+    general_config.id = general_config.id.replace("/", "_")
 
     if not general_config.commit_id:
-        general_config.commit_id = get_current_commit_id()
+        general_config.commit_id = utils.get_current_commit_id()
 
     if not general_config.date:
         general_config.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    general_config.device = torch.device(
-        general_config.device
-    )  # pylint: disable=no-member
-    general_config.experiment_id = experiment_id
     slurm_id = []
     env_var_names = ["SLURM_JOB_ID", "SLURM_STEP_ID"]
     for var_name in env_var_names:
@@ -98,74 +197,40 @@ def _post_process_general_config(general_config, experiment_id=0):
     if slurm_id:
         general_config.slurm_id = "-".join(slurm_id)
 
-    return general_config
+    config.general = general_config
+
+    return config
 
 
-def _post_process_model_config(model_config, config, should_make_dir):
-    """Method to post process the model section of the config"""
+def _process_experiment_config(config: ConfigType, should_make_dir: bool) -> ConfigType:
+    """Process the `experiment` section of the config
 
-    general_config = config.general
+    Args:
+        config (ConfigType): Config object
+        should_make_dir (bool): Should make dir for the data
 
-    if not model_config.save_dir:
-        model_config.save_dir = os.path.join(
-            general_config.base_path, "models", general_config.id
-        )
-    elif model_config.save_dir[0] != "/":
-        model_config.save_dir = os.path.join(
-            general_config.base_path, model_config.save_dir
-        )
-
+    Returns:
+        ConfigType: Processed config
+    """
+    experiment_config = config.experiment
     if should_make_dir:
-        make_dir(path=model_config.save_dir)
-
-    model_config.load_path = os.path.join(
-        general_config.base_path, "model", model_config.load_path
-    )
-
-    for key in ["learning_rate", "eps"]:
-        model_config.optim[key] = float(model_config.optim[key])
-
-    return model_config
+        utils.make_dir(path=experiment_config.save_dir)
+    return config
 
 
-def _post_process_plot_config(plot_config, general_config, should_make_dir):
-    """Method to post process the plot section of the config"""
-    if not plot_config.base_path:
-        plot_config.base_path = os.path.join(
-            general_config.base_path, "plots", general_config.id
-        )
-        if should_make_dir:
-            make_dir(path=plot_config.base_path)
+def _process_logbook_config(config: ConfigType, should_make_dir: bool) -> ConfigType:
+    """Process the `logbook` section of the config
 
-    return plot_config
+    Args:
+        config (ConfigType): Config object
+        should_make_dir (bool): Should make a dir to save the logs
 
+    Returns:
+        ConfigType: Processed config
+    """
+    logbook_config = config.logbook
+    if should_make_dir:
+        utils.make_dir(path=logbook_config.dir)
+        utils.make_dir(path=logbook_config.tensorboard.logdir)
 
-def _post_process_logger_config(logger_config, general_config, should_make_dir):
-    """Method to post process the logger section of the config"""
-
-    logger_config.file = _post_process_logger_file_config(
-        logger_file_config=logger_config.file,
-        general_config=general_config,
-        should_make_dir=should_make_dir,
-    )
-
-    return logger_config
-
-
-def _post_process_logger_file_config(
-    logger_file_config, general_config, should_make_dir
-):
-    """Method to post process the file subsection of the logger section of the config"""
-
-    if not logger_file_config.path:
-        logger_file_config.path = os.path.join(
-            general_config.base_path, "logs", general_config.id
-        )
-        if should_make_dir:
-            make_dir(path=logger_file_config.path)
-            make_dir(os.path.join(logger_file_config.path, "train"))
-            make_dir(os.path.join(logger_file_config.path, "eval"))
-        logger_file_config.path = os.path.join(logger_file_config.path, "log.txt")
-
-    logger_file_config.dir = logger_file_config.path.rsplit("/", 1)[0]
-    return logger_file_config
+    return config

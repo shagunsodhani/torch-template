@@ -1,210 +1,205 @@
-"""Class to run the experiments"""
-# from time import time
+"""Class to interface with an Experiment"""
+
+from __future__ import print_function
 
 import os
-from typing import Iterable, Optional
+from typing import Optional, Tuple
 
 import torch
-from codes.experiment import metric
-from codes.logbook.logbook import LogBook
+import torch.nn as nn
+import torch.utils.data
+
+from codes.dataset import builder as dataset_builder
+from codes.dataset.types import TensorType
+from codes.model import builder as model_builder
+from codes.model.base_model import BaseModel
+from codes.model.utils import OptimizerSchedulerTuple
+from codes.utils import config as config_utils
 from codes.utils.checkpointable import Checkpointable
-from codes.utils.util import get_cpu_stats
+from codes.utils.config import ConfigType
+from ml_logger import logbook
+from ml_logger import metrics as ml_metrics
+from ml_logger.types import LogType
 
 
 class Experiment(Checkpointable):
     """Experiment Class"""
 
-    def __init__(self, config, model):
+    def __init__(self, config: ConfigType, experiment_id: str = "0"):
+        """Experiment Class
+
+        Args:
+            config (ConfigType):
+            experiment_id (str, optional): Defaults to "0".
+        """
+        self.id = experiment_id
         self.config = config
-        self.logbook = LogBook(self.config)
-        self.support_modes = self.config.model.modes
-        self.device = self.config.general.device
-        self.model = model
-        self.logbook.watch_model(model=self.model)
-        self.optimizer, self.scheduler = self.get_scheduler_and_optimizer()
-        self.epoch = None
-        self.logbook.watch_model(model=self.model)
-        self._mode = None
-        self.dataloaders = get_dataloaders(
-            config=config,
-            modes=["train", "val", "test"]
+        logbook_config = logbook.make_config(
+            logger_file_path=self.config.logbook.logger_file_path,
+            tensorboard_config=self.config.logbook.tensorboard,
         )
-        self.reset_experiment()
+        self.logbook = logbook.LogBook(config=logbook_config)
+        self.device = torch.device(self.config.general.device)
+        self.dataloaders = dataset_builder.build(config=self.config)
+        self.model = model_builder.build(config=self.config, device=self.device)
+        assert isinstance(self.model, BaseModel)
+        optimizer_and_scheduler = self.model.get_optimizer_and_scheduler()
+        self.optimizer = optimizer_and_scheduler.optimizer
+        self.scheduler = optimizer_and_scheduler.scheduler
+
+        self.loss_fn = nn.CrossEntropyLoss()
+
+        self.global_metrics = ml_metrics.MetricDict(
+            [
+                ml_metrics.MinMetric("loss"),
+                ml_metrics.MaxMetric("accuracy"),
+                ml_metrics.ConstantMetric("mode", "best_performance_on_test"),
+                ml_metrics.CurrentMetric("epoch"),
+            ]
+        )
+
         self.startup_logs()
-        # torch.autograd.set_detect_anomaly(mode=True)
 
-    def reset_experiment(self):
-        """Reset the experiment"""
-        self._mode = None
-        self.epoch = 0
-
-    def get_scheduler_and_optimizer(self):
-        optimizers, schedulers = self.model.get_optimizers_and_schedulers()
-        return optimizers[0], schedulers[0]
-
-    def write_config_log(self, config):
-        """Method to interface with the logbook"""
-        return self.logbook.write_config_log(config)
-
-    def write_experiment_name(self, config):
-        """Method to interface with the logbook"""
-        return self.logbook.write_config_log(config)
-
-    def write_metric_logs(self, **kwargs):
-        """Method to interface with the logbook"""
-        return self.logbook.write_metric_logs(**kwargs)
-
-    def write_compute_logs(self, **kwargs):
-        """Method to interface with the logbook"""
-        return self.logbook.write_compute_logs(**kwargs)
-
-    # def write_git_metadata(self):
-    #     """Method to interface with the logbook"""
-    #     return self.logbook.set_git_metadata()
-
-    def write_message_logs(self, message):
-        """Method to interface with the logbook"""
-        return self.logbook.write_message_logs(message)
-
-    # def write_trajectory_logs(self, trajectory):
-    #     """Method to interface with the logbook"""
-    #     return self.logbook.write_trajectory_logs(trajectory)
-
-    def write_metadata_logs(self, **kwargs):
-        """Method to interface with the logbook"""
-        return self.logbook.write_metadata_logs(**kwargs)
-
-    # def write_assets(self, kwargs):
-    #     """Method to interface with the logbook"""
-    #     return self.logbook.write_assets(**kwargs)
-
-    # def write_model_graph(self, graph):
-    #     """Write model graph"""
-    #     self.logbook.write_model_graph(graph)
-
-    def set_eval_mode(self):
-        """Prepare for the eval mode"""
-        pass  # pylint: disable=W0107
-
-    def set_train_mode(self):
-        """Prepare for the train mode"""
-        pass  # pylint: disable=W0107
-
-    def run(self):
-        """Method to run the experiment"""
-
-        # start_time = time()
-
-        compute_stats = {}
-        mode = "train"
-        should_log_compute_stats = self.config.log.should_log_compute_stats
-
-        current_metric_dict = metric.get_default_metric_dict(mode=mode)
-
-        current_epoch = 0
-        epoch_to_start_from = self.epoch
-
-        for current_epoch in range(
-            epoch_to_start_from, self.config.model.num_epochs
-        ):
-           if should_log_compute_stats:
-                compute_stats["start_stats"] = get_cpu_stats()
-            self.epoch = current_epoch
-            self.periodic_save(epoch=current_epoch)
-
-            if self.epoch % self.config.cometml.frequency == 0:
-                self.write_metric_logs(**(
-                    metric.prepare_metric_dict_to_log(current_metric_dict,
-                                                      num_updates=self.config.cometml.frequency)))  # pylint: disable=E1121
-                current_metric_dict = metric.get_default_metric_dict(mode)
-
-            if should_log_compute_stats:
-                compute_stats["post_training_stats"] = get_cpu_stats()
-
-            evaluate_frequency = self.config.model.evaluate_frequency
-            if (evaluate_frequency > 0
-                    and self.epoch % evaluate_frequency == 0):
-                with torch.no_grad():
-                    self.set_eval_mode()
-                    self.evaluate(num_training_steps_so_far=total_num_steps,
-                                  num_training_epochs_so_far=self.epoch)
-                    self.set_train_mode()
-
-            if should_log_compute_stats:
-                compute_stats["post_eval_stats"] = get_cpu_stats()
-                compute_stats["num_timesteps"] = total_num_steps
-                self.write_compute_logs(**compute_stats)
-
-            # start_time = time()
-
-    def evaluate(self, num_training_steps_so_far, num_training_epochs_so_far):
-        """Method to run the experiment"""
-
-        metric_dict = dict(
-            mode="test",
-            num_training_steps_so_far=num_training_steps_so_far,
-            num_training_epochs_so_far=num_training_epochs_so_far
-        )
-        self.write_metric_logs(**metric_dict)  # pylint: disable=E1121
-
-    def startup_logs(self):
+    def startup_logs(self) -> None:
         """Method to write some startup logs"""
-        self.write_config_log(self.config)
-        # self.write_git_metadata()
-        # self.log_config_file()
+        self.logbook.write_message("Starting experiment id: {}".format(self.id))
+        self.logbook.write_config_log(config_utils.to_dict(self.config))
 
-    # def log_config_file(self):
-    #     """Method to log the config file"""
-    #     split_key = "codes/experiment"
-    #     current_path = os.path.dirname(os.path.realpath(__file__))
-    #     file_path = os.path.join(current_path.split(split_key)[0],
-    #                              "config/{}.yaml".format(self.config.general.id)
-    #                              )
-    #     self.write_assets(dict(
-    #         file_path=file_path,
-    #         file_name=None,
-    #     ))
-
-    def save(self, epoch: Optional[int]) -> None:
+    def save(self, epoch: int) -> None:
         """Method to save the experiment"""
-        if epoch is None:
-            epoch = self.epoch
-        self.model.save(epoch, optimizers=[self.optimizer])
 
-    def load(self, epoch: Optional[int]) -> None:
+        self.model.save(  # type: ignore
+            epoch=epoch,
+            optimizer_scheduler_tuple=OptimizerSchedulerTuple(
+                optimizer=self.optimizer, scheduler=self.scheduler
+            ),
+            is_best_model=False,
+            path_to_save_to=os.path.join(self.config.experiment.save_dir, self.id),
+        )
+
+    def _load_components(self, path_to_load_from: str, epoch: int) -> None:
+        optimizer_scheduler_tuple, message = self.model.load(  # type: ignore
+            epoch=epoch,
+            optimizer_scheduler_tuple=OptimizerSchedulerTuple(
+                optimizer=self.optimizer, scheduler=self.scheduler
+            ),
+            path_to_load_from=path_to_load_from,
+        )
+        self.optimizer = optimizer_scheduler_tuple.optimizer
+        self.scheduler = optimizer_scheduler_tuple.scheduler
+        self.logbook.write_message(message)
+
+    def load(self, epoch: Optional[int]) -> int:
         """Method to load the entire experiment"""
+
         if epoch is None:
             path_to_load_epoch_state = os.path.join(
-                self.config.model.save_dir, "epoch.tar"
+                self.config.experiment.save_dir, self.id, "epoch.tar"
             )
-            epoch_state = torch.load(path_to_load_epoch_state)
+            self.logbook.write_message(
+                f"Considering {path_to_load_epoch_state} to load epoch state for {self.id}"
+            )
+            if not os.path.exists(path_to_load_epoch_state):
+                # New Experiment
+                self.logbook.write_message(
+                    f"""This is a new experiment. Can not load any model
+                    from {path_to_load_epoch_state} for experiment {self.id}"""
+                )
+                return -1
+            epoch_state = torch.load(path_to_load_epoch_state)  # type: ignore
             epoch = epoch_state["current"]
-        self.epoch = epoch
-        self._load_model()
-
-    def _load_model(self) -> None:
-        """Internal method to load the model (only)"""
-        optimizers, schedulers = self.model.load(
-            epoch=self.epoch, optimizers=[self.optimizer], schedulers=[self.scheduler]
+        path_to_load_from = os.path.join(
+            self.config.experiment.save_dir, self.id, f"epoch_{epoch}.tar"
         )
-        self.optimizer = optimizers[0]
-        self.scheduler = schedulers[0]
+        self._load_components(path_to_load_from=path_to_load_from, epoch=epoch)
+        self.logbook.write_message(
+            f"Loading the model for experiment {self.id} from {path_to_load_from}"
+        )
+        return epoch + 1
 
-    def periodic_save(self, epoch):
+    def periodic_save(self, epoch: int) -> None:
         """Method to perioridically save the experiment.
         This method is a utility method, built on top of save method.
         It performs an extra check of wether the experiment is configured to
         be saved during the current epoch."""
-        if (
-            self.config.model.persist_frquency > 0
-            and epochs % self.config.model.persist_frquency == 0
-            and epoch % self.config.model.persist_frquency == 0
-        ):
-            self.model.save_model(epochs)
+        persist_frquency = self.config.experiment.persist_frquency
+        if persist_frquency > 0 and epoch % persist_frquency == 0:
             self.save(epoch)
 
+    def run(self) -> None:
+        start_epoch = 0
+        self.save(epoch=0)
+        for epoch in range(start_epoch, start_epoch + 200):
+            self.train(epoch)
+            self.test(epoch)
+            if self.scheduler:
+                self.scheduler.step()  # type: ignore
 
-def prepare_and_run_experiment(config, model):
-    """Primary method to interact with the Experiments"""
-    experiment = CheckpointableExperiment(config, model)
-    experiment.run()
+    def train(self, epoch: int) -> None:
+        self.model.train()
+        mode = "train"
+        metric_dict = init_metric_dict(epoch=epoch, mode=mode)
+        trainloader = self.dataloaders[mode]
+        for batch_idx, batch in enumerate(trainloader):
+            current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
+            metric_dict.update(metrics_dict=current_metric)
+            break
+        self.logbook.write_metric_log(
+            metric=prepare_metric_dict_for_tb(metric_dict.to_dict())
+        )
+
+    def test(self, epoch: int) -> None:
+        self.model.eval()
+        mode = "test"
+        metric_dict = init_metric_dict(epoch=epoch, mode=mode)
+        testloader = self.dataloaders[mode]
+
+        for batch_idx, batch in enumerate(testloader):
+            with torch.no_grad():
+                current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
+            metric_dict.update(metrics_dict=current_metric)
+            break
+        self.global_metrics.update(metrics_dict=metric_dict)
+        for metric_to_write in [metric_dict, self.global_metrics]:
+            self.logbook.write_metric_log(
+                metric=prepare_metric_dict_for_tb(metric_to_write.to_dict())
+            )
+
+    def compute_metrics_for_batch(
+        self, batch: Tuple[TensorType, TensorType], mode: str
+    ) -> LogType:
+        should_train = mode == "train"
+        inputs, targets = [_tensor.to(self.device) for _tensor in batch]
+        outputs = self.model(inputs)
+        loss = self.loss_fn(outputs, targets)
+        if should_train:
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+        _, predicted = outputs.max(1)
+        num_correct = predicted.eq(targets).sum().item()
+        total = targets.size(0)
+
+        current_metric = {
+            "loss": loss.item(),
+            "accuracy": num_correct * 1.0 / total,
+        }
+        return current_metric
+
+
+def init_metric_dict(epoch: int, mode: str) -> ml_metrics.MetricDict:
+    metric_dict = ml_metrics.MetricDict(
+        [
+            ml_metrics.AverageMetric("loss"),
+            ml_metrics.AverageMetric("accuracy"),
+            ml_metrics.ConstantMetric("epoch", epoch),
+            ml_metrics.ConstantMetric("mode", mode),
+        ]
+    )
+    return metric_dict
+
+
+def prepare_metric_dict_for_tb(metric: LogType) -> LogType:
+    metric["main_tag"] = metric["mode"]
+    metric["global_step"] = metric["epoch"]
+    return metric

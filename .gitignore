@@ -113,6 +113,8 @@ plots/*
 
 **.TXT
 
+.nox/*
+
 # logs/
 logs/
 models/
