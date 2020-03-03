@@ -25,6 +25,6 @@ def bootstrap_config(
     write_debug_message(
         f"Starting Experiment at {time.asctime(time.localtime(time.time()))}"
     )
-    write_debug_message(f"torch version = {torch.__version_}")  # type: ignore
+    write_debug_message(f"torch version = {torch.__version__}")  # type: ignore
     set_seed(seed=config.general.seed)
     return config

@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import os
+from time import time
 from typing import Optional, Tuple
 
 import torch
@@ -122,20 +123,23 @@ class Experiment(Checkpointable):
         This method is a utility method, built on top of save method.
         It performs an extra check of wether the experiment is configured to
         be saved during the current epoch."""
-        persist_frquency = self.config.experiment.persist_frquency
-        if persist_frquency > 0 and epoch % persist_frquency == 0:
+        persist_frequency = self.config.experiment.persist_frequency
+        if persist_frequency > 0 and epoch % persist_frequency == 0:
             self.save(epoch)
 
     def run(self) -> None:
         start_epoch = 0
-        self.save(epoch=0)
-        for epoch in range(start_epoch, start_epoch + 200):
+        for epoch in range(
+            start_epoch, start_epoch + self.config.experiment.num_epochs
+        ):
             self.train(epoch)
             self.test(epoch)
             if self.scheduler:
                 self.scheduler.step()  # type: ignore
+        self.periodic_save(epoch)
 
     def train(self, epoch: int) -> None:
+        epoch_start_time = time()
         self.model.train()
         mode = "train"
         metric_dict = init_metric_dict(epoch=epoch, mode=mode)
@@ -143,27 +147,27 @@ class Experiment(Checkpointable):
         for batch_idx, batch in enumerate(trainloader):
             current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
             metric_dict.update(metrics_dict=current_metric)
-            break
-        self.logbook.write_metric_log(
-            metric=prepare_metric_dict_for_tb(metric_dict.to_dict())
-        )
+        metric_dict = metric_dict.to_dict()
+        metric_dict["time_taken"] = time() - epoch_start_time
+        self.logbook.write_metric_log(metric=prepare_metric_dict_for_tb(metric_dict))
 
     def test(self, epoch: int) -> None:
+        epoch_start_time = time()
         self.model.eval()
         mode = "test"
         metric_dict = init_metric_dict(epoch=epoch, mode=mode)
         testloader = self.dataloaders[mode]
-
         for batch_idx, batch in enumerate(testloader):
             with torch.no_grad():
                 current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
             metric_dict.update(metrics_dict=current_metric)
-            break
+        metric_dict = metric_dict.to_dict()
+        metric_dict["time_taken"] = time() - epoch_start_time
         self.global_metrics.update(metrics_dict=metric_dict)
-        for metric_to_write in [metric_dict, self.global_metrics]:
-            self.logbook.write_metric_log(
-                metric=prepare_metric_dict_for_tb(metric_to_write.to_dict())
-            )
+        self.logbook.write_metric_log(metric=prepare_metric_dict_for_tb(metric_dict))
+        self.logbook.write_metric_log(
+            metric=prepare_metric_dict_for_tb(self.global_metrics.to_dict())
+        )
 
     def compute_metrics_for_batch(
         self, batch: Tuple[TensorType, TensorType], mode: str
