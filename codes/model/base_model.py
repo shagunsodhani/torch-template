@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from torch import nn
 
+import hydra
 from codes.model.types import OptimizerType, SchedulerType
 from codes.model.utils import OptimizerSchedulerTuple
 from codes.utils import utils
@@ -135,10 +136,7 @@ class BaseModel(nn.Module, Checkpointable):  # type: ignore
     def _register_params_to_optimizer(
         self, model_params: List[torch.nn.Parameter]
     ) -> OptimizerType:
-
-        optim_config = deepcopy(self.config.optim)
-        optim_cls = utils.load_callable(optim_config.pop("cls"))
-        optimizer = optim_cls(model_params, **optim_config)
+        optimizer = hydra.utils.instantiate(self.config.optim, model_params)
         assert isinstance(optimizer, OptimizerType)
         return optimizer
 
@@ -148,10 +146,7 @@ class BaseModel(nn.Module, Checkpointable):  # type: ignore
 
         scheduler_config = deepcopy(self.config.scheduler)
         if scheduler_config:
-
-            scheduler_cls = utils.load_callable(scheduler_config.pop("cls"))
-
-            scheduler = scheduler_cls(optimizer=optimizer, **scheduler_config)
+            scheduler = hydra.utils.instantiate(self.config.scheduler)
             assert isinstance(scheduler, SchedulerType)
 
             return scheduler

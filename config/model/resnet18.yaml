@@ -1,4 +1,5 @@
 # @package _group_
-cls: torchvision.models.resnet18
+builder:
+  cls: codes.model.cifar10_resnet.ResNet18
 params:
   # These key-word arguments are passed to the class constructor

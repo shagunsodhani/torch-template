@@ -1,18 +1,26 @@
-from __future__ import print_function
-
 import shutil
+import time
 from typing import List
 
+import torch
+
 from codes.experiment.experiment import Experiment
-from codes.utils.config import ConfigType
+from codes.utils.config import process_config
+from codes.utils.types import ConfigType
+from codes.utils.utils import set_seed
 
 
 def prepare_and_run(config: ConfigType) -> None:
-    """Prepare an experiment and run the experiment
+    """Prepare an experiment and run the experiment.
 
     Args:
         config (ConfigType): config of the experiment
     """
+
+    config = process_config(config)
+    set_seed(seed=config.general.seed)
+    print(f"Starting Experiment at {time.asctime(time.localtime(time.time()))}")
+    print(f"torch version = {torch.__version__}")  # type: ignore
     experiment = Experiment(config)
     experiment.run()
 

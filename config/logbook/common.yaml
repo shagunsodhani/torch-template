@@ -1,5 +1,4 @@
 # @package _group_
-dir: ${general.base_path}/logs/${general.id}
-logger_file_path: ${logbook.dir}/log.jsonl
-tensorboard:
-  logdir: ${logbook.dir}/tb
+params:
+  logger_dir: ${general.base_path}/logs/${general.id}
+  filename: log.jsonl

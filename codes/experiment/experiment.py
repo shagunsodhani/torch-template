@@ -9,18 +9,17 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 import torch.utils.data
+from ml_logger import logbook
+from ml_logger import metrics as ml_metrics
+from ml_logger.types import LogType
 
-from codes.dataset import builder as dataset_builder
+import hydra
 from codes.dataset.types import TensorType
-from codes.model import builder as model_builder
 from codes.model.base_model import BaseModel
 from codes.model.utils import OptimizerSchedulerTuple
 from codes.utils import config as config_utils
 from codes.utils.checkpointable import Checkpointable
 from codes.utils.config import ConfigType
-from ml_logger import logbook
-from ml_logger import metrics as ml_metrics
-from ml_logger.types import LogType
 
 
 class Experiment(Checkpointable):
@@ -35,14 +34,15 @@ class Experiment(Checkpointable):
         """
         self.id = experiment_id
         self.config = config
-        logbook_config = logbook.make_config(
-            logger_file_path=self.config.logbook.logger_file_path,
-            tensorboard_config=self.config.logbook.tensorboard,
-        )
+        logbook_config = logbook.make_config(**self.config.logbook.params)
         self.logbook = logbook.LogBook(config=logbook_config)
         self.device = torch.device(self.config.general.device)
-        self.dataloaders = dataset_builder.build(config=self.config)
-        self.model = model_builder.build(config=self.config, device=self.device)
+        self.dataloaders = hydra.utils.instantiate(
+            self.config.dataset.builder, self.config
+        )
+        self.model = hydra.utils.instantiate(
+            self.config.model.builder, self.config, self.device
+        )
         assert isinstance(self.model, BaseModel)
         optimizer_and_scheduler = self.model.get_optimizer_and_scheduler()
         self.optimizer = optimizer_and_scheduler.optimizer

@@ -9,7 +9,7 @@ from codes.utils.config import ConfigType
 
 
 def get_dataloaders(config: ConfigType) -> Dict[str, DataLoaderType]:
-    dataset_config = config.dataset
+    dataset_config = config.dataset.params
     transform_train = transforms.Compose(
         [
             transforms.RandomCrop(32, padding=4),
