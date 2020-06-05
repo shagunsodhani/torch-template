@@ -1,0 +1,6 @@
+# @package _group_
+
+cls: torch.optim.Adam # cls should be the Optimizer class
+params:
+  # These key-word arguments are passed to the class constructor
+  lr: 0.001

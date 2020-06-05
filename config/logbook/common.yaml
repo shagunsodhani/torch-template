@@ -1,0 +1,4 @@
+# @package _group_
+params:
+  logger_dir: ${general.base_path}/logs/${general.id}
+  filename: log.jsonl

@@ -1,7 +1,5 @@
 """Collection of utility functions"""
 
-# pylint: disable=C0103
-
 import gc
 import importlib
 import json
@@ -9,7 +7,7 @@ import os
 import pathlib
 import random
 import re
-import subprocess
+import subprocess  # noqa: S404
 from functools import reduce, wraps
 from operator import mul
 from time import time
@@ -93,13 +91,13 @@ def shuffle_list(*ls: Iterable[T]) -> Iterable[T]:
     return zip(*input_list)
 
 
-def chunks(l: List[T], n: int) -> Iterator[List[T]]:
+def chunks(_list: List[T], n: int) -> Iterator[List[T]]:
     """
     Taken from
     https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
     Yield successive n-sized chunks from l."""
-    for idx in range(0, len(l), n):
-        yield l[idx : idx + n]  # noqa: E203
+    for idx in range(0, len(_list), n):
+        yield _list[idx : idx + n]  # noqa: E203
 
 
 def reverse_dict(_dict: Dict[Any, Any]) -> Dict[Any, Any]:
@@ -112,13 +110,6 @@ def make_dir(path: str) -> None:
     pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
 
-# def get_device_name(device_type):
-#     """Get device name"""
-#     if torch.cuda.is_available() and "cuda" in device_type:
-#         return device_type
-#     return "cpu"
-
-
 def get_current_commit_id() -> str:
     """Get current commit id
 
@@ -126,7 +117,9 @@ def get_current_commit_id() -> str:
         str: Current commit id
     """
     command = "git rev-parse HEAD"
-    commit_id = subprocess.check_output(command.split()).strip().decode("utf-8")
+    commit_id = (
+        subprocess.check_output(command.split()).strip().decode("utf-8")  # noqa: S603
+    )
     return commit_id
 
 
@@ -179,7 +172,7 @@ def log_pdf(x: torch.Tensor, mu: torch.Tensor, std: torch.Tensor) -> torch.Tenso
     Taken from: https://chrisorm.github.io/VI-MC-PYT.html"""
 
     return -0.5 * torch.log(2 * np.pi * std ** 2) - (
-        0.5 * (1.0 / (std ** 2)) * (x - mu) ** 2  # type: ignore
+        0.5 * (1.0 / (std ** 2)) * (x - mu) ** 2
     )  # pylint: disable=no-member
     # Unsupported operand types for / ("float" and "Tensor")  [operator]
 
