@@ -1,6 +1,6 @@
 # @package _group_
 seed: 42
-base_path: ~/projects/torch-template
+base_path: ~/torch-template
 device: cuda:0
 id: sample_config
 description: Sample Config
