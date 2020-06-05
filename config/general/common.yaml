@@ -1,0 +1,11 @@
+# @package _group_
+seed: 42
+base_path: ~/projects/torch-template
+device: cuda:0
+id: sample_config
+description: Sample Config
+tags:
+  - sample
+commit_id:
+date:
+slurm_id:

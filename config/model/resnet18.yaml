@@ -1,0 +1,4 @@
+# @package _group_
+cls: torchvision.models.resnet18
+params:
+  # These key-word arguments are passed to the class constructor

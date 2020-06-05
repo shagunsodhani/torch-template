@@ -1,0 +1,7 @@
+defaults:
+  - general: common
+  - logbook: common
+  - experiment: cifar10
+  - dataset: cifar10
+  - model: resnet18
+  - optim: adam

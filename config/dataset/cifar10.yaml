@@ -1,3 +1,4 @@
+# @package _group_
 name: cifar10
 cls: codes.dataset.${dataset.name}
 dir: ${general.base_path}/data
