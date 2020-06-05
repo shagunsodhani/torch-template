@@ -5,3 +5,10 @@ defaults:
   - dataset: cifar10
   - model: resnet18
   - optim: adam
+
+hydra:
+  job_logging:
+    root:
+      handlers: []
+  run:
+    dir: outputs/${general.id}/${now:%Y-%m-%d_%H-%M-%S}
