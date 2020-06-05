@@ -17,7 +17,7 @@ Boiler plate code for Torch based ML projects
 * The entry point for the code is `main.py`.
 * A sample jupyter notebook is available in `codes/notebook`.
 * Run the code using `PYTHONPATH=. python main.py`. This uses the config in `config/config.yaml`.
-* The code uses [Hydra] (https://github.com/facebookresearch/hydra) framework for composing configs.
+* The code uses [Hydra](https://github.com/facebookresearch/hydra) framework for composing configs.
 
 ### Acknowledgements
 
