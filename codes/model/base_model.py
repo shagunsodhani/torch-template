@@ -13,7 +13,7 @@ from codes.model.types import OptimizerType, SchedulerType
 from codes.model.utils import OptimizerSchedulerTuple
 from codes.utils import utils
 from codes.utils.checkpointable import Checkpointable
-from codes.utils.config import ConfigType
+from codes.utils.types import ConfigType
 
 
 class BaseModel(nn.Module, Checkpointable):  # type: ignore

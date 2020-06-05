@@ -1,11 +1,9 @@
 """Code to interface with the config."""
 import datetime
 import os
-from copy import deepcopy
-from pathlib import Path
-from typing import Any, Dict, Union, cast
+from typing import Any, Dict, cast
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 
 from codes.utils import utils
 from codes.utils.types import ConfigType

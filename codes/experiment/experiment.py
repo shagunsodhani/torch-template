@@ -19,7 +19,7 @@ from codes.model.base_model import BaseModel
 from codes.model.utils import OptimizerSchedulerTuple
 from codes.utils import config as config_utils
 from codes.utils.checkpointable import Checkpointable
-from codes.utils.config import ConfigType
+from codes.utils.types import ConfigType
 
 
 class Experiment(Checkpointable):
@@ -42,7 +42,7 @@ class Experiment(Checkpointable):
         )
         self.model = hydra.utils.instantiate(
             self.config.model.builder, self.config, self.device
-        )
+        ).to(self.device)
         assert isinstance(self.model, BaseModel)
         optimizer_and_scheduler = self.model.get_optimizer_and_scheduler()
         self.optimizer = optimizer_and_scheduler.optimizer
@@ -63,13 +63,12 @@ class Experiment(Checkpointable):
 
     def startup_logs(self) -> None:
         """Method to write some startup logs"""
-        self.logbook.write_message("Starting experiment id: {}".format(self.id))
-        self.logbook.write_config_log(config_utils.to_dict(self.config))
+        self.logbook.write_config(config_utils.to_dict(self.config))
 
     def save(self, epoch: int) -> None:
         """Method to save the experiment"""
 
-        self.model.save(  # type: ignore
+        self.model.save(
             epoch=epoch,
             optimizer_scheduler_tuple=OptimizerSchedulerTuple(
                 optimizer=self.optimizer, scheduler=self.scheduler
@@ -79,7 +78,7 @@ class Experiment(Checkpointable):
         )
 
     def _load_components(self, path_to_load_from: str, epoch: int) -> None:
-        optimizer_scheduler_tuple, message = self.model.load(  # type: ignore
+        optimizer_scheduler_tuple, message = self.model.load(
             epoch=epoch,
             optimizer_scheduler_tuple=OptimizerSchedulerTuple(
                 optimizer=self.optimizer, scheduler=self.scheduler
@@ -135,7 +134,7 @@ class Experiment(Checkpointable):
             self.train(epoch)
             self.test(epoch)
             if self.scheduler:
-                self.scheduler.step()  # type: ignore
+                self.scheduler.step()
         self.periodic_save(epoch)
 
     def train(self, epoch: int) -> None:
@@ -144,12 +143,12 @@ class Experiment(Checkpointable):
         mode = "train"
         metric_dict = init_metric_dict(epoch=epoch, mode=mode)
         trainloader = self.dataloaders[mode]
-        for batch_idx, batch in enumerate(trainloader):
+        for _batch_idx, batch in enumerate(trainloader):
             current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
             metric_dict.update(metrics_dict=current_metric)
         metric_dict = metric_dict.to_dict()
         metric_dict["time_taken"] = time() - epoch_start_time
-        self.logbook.write_metric_log(metric=prepare_metric_dict_for_tb(metric_dict))
+        self.logbook.write_metric(metric=metric_dict)
 
     def test(self, epoch: int) -> None:
         epoch_start_time = time()
@@ -157,17 +156,15 @@ class Experiment(Checkpointable):
         mode = "test"
         metric_dict = init_metric_dict(epoch=epoch, mode=mode)
         testloader = self.dataloaders[mode]
-        for batch_idx, batch in enumerate(testloader):
+        for _batch_idx, batch in enumerate(testloader):
             with torch.no_grad():
                 current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
             metric_dict.update(metrics_dict=current_metric)
         metric_dict = metric_dict.to_dict()
         metric_dict["time_taken"] = time() - epoch_start_time
         self.global_metrics.update(metrics_dict=metric_dict)
-        self.logbook.write_metric_log(metric=prepare_metric_dict_for_tb(metric_dict))
-        self.logbook.write_metric_log(
-            metric=prepare_metric_dict_for_tb(self.global_metrics.to_dict())
-        )
+        self.logbook.write_metric(metric=metric_dict)
+        self.logbook.write_metric(metric=self.global_metrics.to_dict())
 
     def compute_metrics_for_batch(
         self, batch: Tuple[TensorType, TensorType], mode: str
@@ -201,9 +198,3 @@ def init_metric_dict(epoch: int, mode: str) -> ml_metrics.MetricDict:
         ]
     )
     return metric_dict
-
-
-def prepare_metric_dict_for_tb(metric: LogType) -> LogType:
-    metric["main_tag"] = metric["mode"]
-    metric["global_step"] = metric["epoch"]
-    return metric
