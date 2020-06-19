@@ -1,5 +1,6 @@
+---
 # @package _group_
-builder: 
+builder:
   cls: codes.dataset.cifar10.get_dataloaders
 params:
   # name: cifar10
@@ -8,9 +9,9 @@ params:
   dataloader:
     train:
       batch_size: 128
-      shuffle: True
+      shuffle: true
       num_workers: 2
     test:
       batch_size: 128
-      shuffle: False
+      shuffle: false
       num_workers: 2

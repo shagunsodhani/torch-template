@@ -1,6 +1,7 @@
+---
 # @package _group_
 seed: 42
-base_path: ~/torch-template
+base_path: /private/home/sodhani/projects/torch-template
 device: cuda:0
 id: sample_config
 description: Sample Config
