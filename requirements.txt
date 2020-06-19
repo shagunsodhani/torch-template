@@ -20,6 +20,7 @@ sphinxcontrib-napoleon==0.7
 torch==1.5.0
 torchvision==0.6.0
 typing-extensions==3.7.4.2
+yamllint==1.23.0
 
 
 

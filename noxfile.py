@@ -10,6 +10,7 @@ def lint(session):
     session.run("flake8", "main.py")
     session.run("black", "--check", "codes")
     session.run("black", "--check", "main.py")
+    session.run("yamllint", "config")
 
 
 @nox.session(venv_backend="conda")
