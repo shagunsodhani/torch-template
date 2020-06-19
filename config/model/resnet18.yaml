@@ -1,5 +1,6 @@
+---
 # @package _group_
 builder:
   cls: codes.model.cifar10_resnet.ResNet18
 params:
-  # These key-word arguments are passed to the class constructor
+# These key-word arguments are passed to the class constructor

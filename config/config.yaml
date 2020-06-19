@@ -1,3 +1,4 @@
+---
 defaults:
   - general: common
   - logbook: common

@@ -2,7 +2,7 @@
 import nox
 
 
-@nox.session(venv_backend="conda")
+@nox.session()
 def lint(session):
     session.install("--upgrade", "setuptools", "pip")
     session.install("-r", "requirements.txt")
@@ -10,9 +10,10 @@ def lint(session):
     session.run("flake8", "main.py")
     session.run("black", "--check", "codes")
     session.run("black", "--check", "main.py")
+    session.run("yamllint", "config")
 
 
-@nox.session(venv_backend="conda")
+@nox.session()
 def mypy(session):
     session.install("--upgrade", "setuptools", "pip")
     session.install("-r", "requirements.txt")

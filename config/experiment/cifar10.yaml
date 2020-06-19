@@ -1,7 +1,8 @@
+---
 # @package _group_
 num_epochs: 100
-persist_frequency: -1 # If persist frequency < 0, the model is not persisted
-persist_best_model: False
+persist_frequency: -1  # If persist frequency < 0, the model is not persisted
+persist_best_model: false
 early_stopping_patience: 100
 save_dir: ${general.base_path}/models/${general.id}
 load_path:
