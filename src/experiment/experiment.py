@@ -144,7 +144,7 @@ class Experiment(Checkpointable):
         mode = "train"
         metric_dict = init_metric_dict(epoch=epoch, mode=mode)
         trainloader = self.dataloaders[mode]
-        for batch_idx, batch in enumerate(trainloader):
+        for batch_idx, batch in enumerate(trainloader):  # noqa: B007
             current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
             metric_dict.update(metrics_dict=current_metric)
         metric_dict = metric_dict.to_dict()
@@ -157,7 +157,7 @@ class Experiment(Checkpointable):
         mode = "test"
         metric_dict = init_metric_dict(epoch=epoch, mode=mode)
         testloader = self.dataloaders[mode]
-        for batch_idx, batch in enumerate(testloader):
+        for batch_idx, batch in enumerate(testloader):  # noqa: B007
             with torch.no_grad():
                 current_metric = self.compute_metrics_for_batch(batch=batch, mode=mode)
             metric_dict.update(metrics_dict=current_metric)

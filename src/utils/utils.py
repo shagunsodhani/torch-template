@@ -94,13 +94,13 @@ def shuffle_list(*ls: Iterable[T]) -> Iterable[T]:
     return zip(*input_list)
 
 
-def chunks(l: List[T], n: int) -> Iterator[List[T]]:
+def chunks(input_list: List[T], n: int) -> Iterator[List[T]]:
     """
     Taken from
     https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
     Yield successive n-sized chunks from l."""
-    for idx in range(0, len(l), n):
-        yield l[idx : idx + n]  # noqa: E203
+    for idx in range(0, len(input_list), n):
+        yield input_list[idx : idx + n]  # noqa: E203
 
 
 def reverse_dict(_dict: Dict[Any, Any]) -> Dict[Any, Any]:
