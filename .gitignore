@@ -119,3 +119,12 @@ plots/*
 logs/
 models/
 .vscode
+
+# Hydra
+outputs/*
+multirun/*
+.submitit
+
+notebooks/*
+
+scripts/*
