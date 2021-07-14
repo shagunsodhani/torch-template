@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Iterable, Iterator, List, Tuple, TypeVar
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import psutil
 import torch
 
@@ -58,8 +59,8 @@ def flatten_dict(
 
 def unflatten_dict(dictionary: Dict[str, Any], sep: str = "#") -> Dict[str, Any]:
     """Method to flatten a given dict using the given seperator.
-        Taken from https://stackoverflow.com/questions/6037503/python-unflatten-dict
-        """
+    Taken from https://stackoverflow.com/questions/6037503/python-unflatten-dict
+    """
     resultDict: Dict[str, Any] = {}
     for key, value in dictionary.items():
         parts = key.split(sep)
@@ -78,7 +79,7 @@ def grouped(iterable: Iterable[T], num_elements_to_group: int) -> Iterable[Itera
     return zip(*[iter(iterable)] * num_elements_to_group)
 
 
-def padarray(A: np.array, size: int, const: float = 1.0) -> np.array:
+def padarray(A: npt.NDArray, size: int, const: float = 1.0) -> npt.NDArray:
     """Taken from
     https://stackoverflow.com/questions/38191855/zero-pad-numpy-array/38192105"""
     t = size - len(A)
@@ -155,14 +156,14 @@ def timing(f: Callable[..., Any]) -> Callable[..., Any]:
     return wrap
 
 
-def show_tensor_as_image(_tensor: np.asarray) -> None:
+def show_tensor_as_image(_tensor: npt.NDArray) -> None:
     """Plot a tensor as image"""
     plt.imshow(_tensor.astype(np.uint8), origin="lower")
     plt.show()
 
 
-def save_tensor_as_image(_tensor: np.asarray, file_path: str) -> None:
-    """Save a tensor as image """
+def save_tensor_as_image(_tensor: npt.NDArray, file_path: str) -> None:
+    """Save a tensor as image"""
     plt.imsave(file_path, _tensor.astype(np.uint8), origin="lower")
 
 
@@ -184,7 +185,7 @@ def log_pdf(x: torch.Tensor, mu: torch.Tensor, std: torch.Tensor) -> torch.Tenso
     # Unsupported operand types for / ("float" and "Tensor")  [operator]
 
 
-def running_mean(x: np.array, N: int) -> np.array:
+def running_mean(x: npt.NDArray, N: int) -> npt.NDArray:
     """Taken from
     https://stackoverflow.com/questions/13728392/moving-average-or-running-mean"""
     cumsum = np.cumsum(np.insert(x, 0, 0))
@@ -224,8 +225,8 @@ def unmerge_second_and_third_dim(
 
 def merge_nested_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
     """Method to merge dict1 and dict2.
-        dict1 is over written
-        """
+    dict1 is over written
+    """
     sep = "#"
     flattened_dict1 = flatten_dict(dict1, sep=sep)
     flattened_dict2 = flatten_dict(dict2, sep=sep)
@@ -259,7 +260,7 @@ def print_mem_report() -> None:
 
 
 def get_cpu_stats() -> Dict[str, str]:
-    """Method to return/print the CPU stats. Taken from pytorch forums """
+    """Method to return/print the CPU stats. Taken from pytorch forums"""
     cpu_percent = psutil.cpu_percent()
     virtual_memory = psutil.virtual_memory()
     pid = os.getpid()

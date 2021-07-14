@@ -112,7 +112,8 @@ class BaseModel(nn.Module, Checkpointable):  # type: ignore
 
     def _load_model_params(self, state_dict: Dict[str, Any]) -> Any:
         """Method to load the model params"""
-        self.load_state_dict(state_dict)
+        self.load_state_dict(state_dict)  # type: ignore[arg-type]
+        # original error: Argument 1 to "load_state_dict" of "Module" has incompatible type "Dict[str, Any]"; expected "OrderedDict[str, Tensor]"  [arg-type]
 
     def get_model_params(self) -> List[torch.nn.Parameter]:
         """Method to get the model params"""

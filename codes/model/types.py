@@ -11,7 +11,7 @@ else:
 SchedulerType = optim.lr_scheduler._LRScheduler
 
 if TYPE_CHECKING:
-    ModelType = nn.Module[TensorType]
+    ModelType = nn.Module
 else:
     ModelType = Any
 

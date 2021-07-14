@@ -9,6 +9,9 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 import torch.utils.data
+from xplogger import logbook
+from xplogger import metrics as ml_metrics
+from xplogger.types import LogType
 
 from codes.dataset import builder as dataset_builder
 from codes.dataset.types import TensorType
@@ -18,9 +21,6 @@ from codes.model.utils import OptimizerSchedulerTuple
 from codes.utils import config as config_utils
 from codes.utils.checkpointable import Checkpointable
 from codes.utils.config import ConfigType
-from ml_logger import logbook
-from ml_logger import metrics as ml_metrics
-from ml_logger.types import LogType
 
 
 class Experiment(Checkpointable):
