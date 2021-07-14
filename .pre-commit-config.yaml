@@ -2,10 +2,10 @@
 repos:
 
   - repo: https://github.com/psf/black
-    rev: stable
+    rev: 20.8b1
     hooks:
       - id: black
-        language_version: python3.6
+        language_version: python3.8
 
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.7.9
@@ -20,3 +20,17 @@ repos:
         additional_dependencies: [tokenize-rt==3.2.0]
         args: [--no-strict-optional, --ignore-missing-imports]
         exclude: setup.py
+
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.17.0
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.5.2
+    hooks:
+      - id: isort
+        files: 'src/.*'
+      - id: isort
+        files: 'tests/.*'
