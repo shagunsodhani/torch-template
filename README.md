@@ -5,7 +5,7 @@ Boiler plate code for Torch based ML projects
 
 ### Dev Setup
 
-* Works with Python 3.6, 3.7, 3.8
+* Works with Python 3.7, 3.8, 3.9
 * `pip install -r requirements/dev.txt`
 * Install pre-commit hooks `pre-commit install`
 * The code is linted using:
