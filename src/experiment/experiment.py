@@ -13,14 +13,14 @@ from xplogger import logbook
 from xplogger import metrics as ml_metrics
 from xplogger.types import LogType
 
-from codes.dataset import builder as dataset_builder
-from codes.dataset.types import TensorType
-from codes.model import builder as model_builder
-from codes.model.base_model import BaseModel
-from codes.model.utils import OptimizerSchedulerTuple
-from codes.utils import config as config_utils
-from codes.utils.checkpointable import Checkpointable
-from codes.utils.config import ConfigType
+from src.dataset import builder as dataset_builder
+from src.dataset.types import TensorType
+from src.model import builder as model_builder
+from src.model.base_model import BaseModel
+from src.model.utils import OptimizerSchedulerTuple
+from src.utils import config as config_utils
+from src.utils.checkpointable import Checkpointable
+from src.utils.config import ConfigType
 
 
 class Experiment(Checkpointable):

@@ -4,8 +4,8 @@ import torch
 import torchvision
 from torchvision import transforms as transforms
 
-from codes.dataset.types import DataLoaderType
-from codes.utils.config import ConfigType
+from src.dataset.types import DataLoaderType
+from src.utils.config import ConfigType
 
 
 def get_dataloaders(config: ConfigType) -> Dict[str, DataLoaderType]:

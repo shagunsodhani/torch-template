@@ -1,8 +1,8 @@
 import torch
 
-from codes.model.types import ModelType
-from codes.utils import utils
-from codes.utils.config import ConfigType
+from src.model.types import ModelType
+from src.utils import utils
+from src.utils.config import ConfigType
 
 
 def build(config: ConfigType, device: torch.device) -> ModelType:

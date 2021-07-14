@@ -2,8 +2,8 @@ import time
 
 import torch
 
-from codes.utils.config import ConfigType, get_config
-from codes.utils.utils import set_seed, write_debug_message
+from src.utils.config import ConfigType, get_config
+from src.utils.utils import set_seed, write_debug_message
 
 
 def bootstrap_config(

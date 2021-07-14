@@ -8,7 +8,9 @@ def argument_parser() -> str:
         description="Argument parser to obtain the name of the config file"
     )
     parser.add_argument(
-        "--config_id", default="sample_config", help="config id to use",
+        "--config_id",
+        default="sample_config",
+        help="config id to use",
     )
     args = parser.parse_args()
     assert isinstance(args.config_id, str)

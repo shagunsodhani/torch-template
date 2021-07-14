@@ -1,9 +1,9 @@
 from copy import deepcopy
 from typing import Dict
 
-from codes.dataset.types import DataLoaderType
-from codes.utils import utils
-from codes.utils.config import ConfigType
+from src.dataset.types import DataLoaderType
+from src.utils import utils
+from src.utils.config import ConfigType
 
 
 def build(config: ConfigType) -> Dict[str, DataLoaderType]:

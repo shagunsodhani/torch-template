@@ -1,8 +1,8 @@
 """This is the main entry point for the code"""
 
-from codes.app import utils
-from codes.experiment import utils as experiment_utils
-from codes.utils.argument_parser import argument_parser
+from src.app import utils
+from src.experiment import utils as experiment_utils
+from src.utils.argument_parser import argument_parser
 
 
 def run(config_id: str) -> None:

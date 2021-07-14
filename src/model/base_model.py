@@ -8,11 +8,11 @@ import numpy as np
 import torch
 from torch import nn
 
-from codes.model.types import OptimizerType, SchedulerType
-from codes.model.utils import OptimizerSchedulerTuple
-from codes.utils import utils
-from codes.utils.checkpointable import Checkpointable
-from codes.utils.config import ConfigType
+from src.model.types import OptimizerType, SchedulerType
+from src.model.utils import OptimizerSchedulerTuple
+from src.utils import utils
+from src.utils.checkpointable import Checkpointable
+from src.utils.config import ConfigType
 
 
 class BaseModel(nn.Module, Checkpointable):  # type: ignore

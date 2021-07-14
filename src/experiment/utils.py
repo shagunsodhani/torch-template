@@ -3,8 +3,8 @@ from __future__ import print_function
 import shutil
 from typing import List
 
-from codes.experiment.experiment import Experiment
-from codes.utils.config import ConfigType
+from src.experiment.experiment import Experiment
+from src.utils.config import ConfigType
 
 
 def prepare_and_run(config: ConfigType) -> None:

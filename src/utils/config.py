@@ -7,7 +7,7 @@ from typing import Any, Dict, Union, cast
 
 from omegaconf import DictConfig, OmegaConf
 
-from codes.utils import utils
+from src.utils import utils
 
 ConfigType = Union[DictConfig]
 

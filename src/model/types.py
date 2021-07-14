@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from torch import nn, optim
 
-from codes.dataset.types import TensorType
+from src.dataset.types import TensorType
 
 if TYPE_CHECKING:
     OptimizerType = optim.optimizer.Optimizer
